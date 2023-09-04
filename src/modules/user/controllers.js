@@ -77,8 +77,8 @@ async function signIn(req, res) {
 
 async function sendOTP(req, res) {
   try {
-    const { mobileNumber } = req.body;
-    console.log("OTP NUMBRR ======", mobileNumber)
+    // const { mobileNumber } = req.body;
+
     // You can perform authentication checks here
     res.status(200).json({
       status: true,
