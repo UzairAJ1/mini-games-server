@@ -4,7 +4,7 @@ const {
   addLike,
   deleteLike,
   getUserLikes,
-  getLikes
+  getLikes,
 } = require("./controllers");
 
 router.post("/addLike", addLike);

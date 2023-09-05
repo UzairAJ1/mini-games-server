@@ -1,4 +1,4 @@
-const { User } = require('../../models/User'); // Make sure to adjust the path accordingly
+const { User } = require("../../models/User"); // Make sure to adjust the path accordingly
 const fs = require("fs");
 
 // Add user
@@ -9,14 +9,22 @@ async function addUser(req, res) {
     const { mobileNumber } = userData;
     const existingUser = await User.findOne({ mobileNumber });
     if (existingUser) {
-      uploadedImages?.forEach((image) => { fs.unlink(image.path, (err) => { if (err) { console.log("Error deleting uploaded image:", err) } }) });
-      return res.status(400).json({ error: 'User with this mobile number already exists' });
+      uploadedImages?.forEach((image) => {
+        fs.unlink(image.path, (err) => {
+          if (err) {
+            console.log("Error deleting uploaded image:", err);
+          }
+        });
+      });
+      return res
+        .status(400)
+        .json({ error: "User with this mobile number already exists" });
     }
-    let profileImages = []
+    let profileImages = [];
     if (uploadedImages?.length > 0) {
       profileImages = uploadedImages.map((image, index) => ({
         uri: image?.path,
-        orderId: index + 1
+        orderId: index + 1,
       }));
     }
     const newUser = new User({
@@ -24,27 +32,39 @@ async function addUser(req, res) {
       ...(userData?.fullName && { fullName: userData.fullName }),
       ...(userData?.dateOfBirth && { dateOfBirth: userData.dateOfBirth }),
       ...(userData?.gender && { gender: userData.gender }),
-      ...(userData?.interests && { interests: JSON.parse(userData?.interests) }),
-      ...(userData?.discreetMode && { discreetMode: JSON.parse(userData.discreetMode) }),
+      ...(userData?.interests && {
+        interests: JSON.parse(userData?.interests),
+      }),
+      ...(userData?.discreetMode && {
+        discreetMode: JSON.parse(userData.discreetMode),
+      }),
       ...(userData?.aboutYou && { aboutYou: userData.aboutYou }),
-      ...(userData?.sexualOrientation && { sexualOrientation: userData?.sexualOrientation }),
+      ...(userData?.sexualOrientation && {
+        sexualOrientation: userData?.sexualOrientation,
+      }),
       ...(userData?.wantToSee && { wantToSee: userData?.wantToSee }),
       ...(userData?.lookingFor && { lookingFor: userData?.lookingFor }),
       ...(userData?.distance && { distance: userData?.distance }),
       ...(userData?.ageRange && { ageRange: JSON.parse(userData?.ageRange) }),
       ...(userData?.userType && { userType: userData?.userType }),
-      ...(profileImages?.length > 0 && { profileImages: profileImages })
+      ...(profileImages?.length > 0 && { profileImages: profileImages }),
     });
     const savedUser = await newUser.save();
     res.status(201).json({
       data: savedUser,
       status: true,
       message: "User created successfully",
-      status: 200
+      status: 200,
     });
   } catch (error) {
-    uploadedImages?.forEach((image) => { fs.unlink(image.path, (err) => { if (err) { console.log("Error deleting uploaded image:", err) } }) });
-    res.status(500).json({ error: 'Failed to add user' });
+    uploadedImages?.forEach((image) => {
+      fs.unlink(image.path, (err) => {
+        if (err) {
+          console.log("Error deleting uploaded image:", err);
+        }
+      });
+    });
+    res.status(500).json({ error: "Failed to add user" });
   }
 }
 
@@ -55,7 +75,7 @@ async function signIn(req, res) {
     const user = await User.findOne({ mobileNumber });
 
     if (!user) {
-      res.status(404).json({ message: 'User not found' });
+      res.status(404).json({ message: "User not found" });
       return;
     }
 
@@ -65,13 +85,12 @@ async function signIn(req, res) {
       data: user,
       status: true,
       message: "User logged in successfully",
-      status: 200
+      status: 200,
     });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to sign in' });
+    res.status(500).json({ error: "Failed to sign in" });
   }
-};
-
+}
 
 // SEND OTP
 
@@ -83,28 +102,28 @@ async function sendOTP(req, res) {
     res.status(200).json({
       status: true,
       message: "OTP sent to phone number",
-      status: 200
+      status: 200,
     });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to send otp' });
+    res.status(500).json({ error: "Failed to send otp" });
   }
-};
+}
 
 // VERIFY CODE
 
 async function verifyOTP(req, res) {
-  console.log("GET DATA =======", req.body)
+  console.log("GET DATA =======", req.body);
 
   try {
     const { mobileNumber, otp } = req.body;
     const user = await User.findOne({ mobileNumber });
 
-    console.log("COMPLETE USER ========", user)
+    console.log("COMPLETE USER ========", user);
     if (otp != "1234") {
-      res.status(500).json({ message: 'Incorrect OTP', status: 500 });
-      return
+      res.status(500).json({ message: "Incorrect OTP", status: 500 });
+      return;
     }
-    let isComplete = false
+    let isComplete = false;
     if (
       user?.fullName &&
       user?.dateOfBirth &&
@@ -120,35 +139,31 @@ async function verifyOTP(req, res) {
       user?.distance &&
       user?.ageRange
     ) {
-      console.log("IM HERE COMPLETE ")
-      isComplete = true
+      console.log("IM HERE COMPLETE ");
+      isComplete = true;
     }
     if (!user) {
-      const newUser = new User({ mobileNumber })
+      const newUser = new User({ mobileNumber });
       const savedUser = await newUser.save();
       res.status(201).json({
         data: { ...savedUser?._doc, isComplete },
         status: true,
         message: "User created successfully",
-        status: 200
+        status: 200,
       });
-    }
-    else {
+    } else {
       res.status(200).json({
         data: { ...user?._doc, isComplete },
         status: true,
         message: "User logged in successfully",
-        status: 200
+        status: 200,
       });
     }
     // You can perform authentication checks here
-
-
   } catch (error) {
-    res.status(500).json({ error: 'Failed to verify otp', status: 500 });
+    res.status(500).json({ error: "Failed to verify otp", status: 500 });
   }
-};
-
+}
 
 // Get single user
 async function getUser(req, res) {
@@ -156,19 +171,19 @@ async function getUser(req, res) {
     const userId = req.params.id; // Assuming you're passing the user ID as a parameter
     const user = await User.findById(userId);
     if (!user) {
-      res.status(404).json({ message: 'User not found' });
+      res.status(404).json({ message: "User not found" });
       return;
     }
     res.status(200).json({
       data: user,
       status: true,
       message: "User data",
-      status: 200
+      status: 200,
     });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to get user' });
+    res.status(500).json({ error: "Failed to get user" });
   }
-};
+}
 
 // Delete user
 async function deleteUser(req, res) {
@@ -177,15 +192,15 @@ async function deleteUser(req, res) {
     const deletedUser = await User.findByIdAndDelete(userId);
 
     if (!deletedUser) {
-      res.status(404).json({ message: 'User not found' });
+      res.status(404).json({ message: "User not found" });
       return;
     }
 
-    res.status(200).json({ message: 'User deleted successfully' });
+    res.status(200).json({ message: "User deleted successfully" });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to delete user' });
+    res.status(500).json({ error: "Failed to delete user" });
   }
-};
+}
 
 // Get All Users
 async function getAllUsers(req, res) {
@@ -195,32 +210,88 @@ async function getAllUsers(req, res) {
       data: users,
       status: true,
       message: "All users data",
-      status: 200
+      status: 200,
     });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to get users' });
+    res.status(500).json({ error: "Failed to get users" });
   }
-};
+}
+
+async function filterUsers(req, res) {
+  try {
+    const { gender, age, distance } = req.query;
+
+    const parsedAge = JSON.parse(age);
+
+    const filters = {
+      "ageRange.start": { $gte: parsedAge.start },
+      "ageRange.end": { $lte: parsedAge.end },
+    };
+
+    if (gender) {
+      filters.gender = gender;
+    }
+
+    if (distance) {
+      filters.distance = { $lte: parseInt(distance) };
+    }
+
+    const filteredUsers = await User.find(filters);
+
+    res.status(200).json({
+      toal: filteredUsers.length,
+      data: filteredUsers,
+      status: true,
+      message: "Filtered User Data",
+      status: 200,
+    });
+  } catch (error) {
+    res.status(500).json(error.message);
+  }
+}
+
+async function filteredUsersByInterests(req, res) {
+  try {
+    const { interests } = req.query;
+
+    let filters = {};
+
+    if (interests) {
+      const interestsArray = interests.split(",");
+      filters = { interests: { $in: interestsArray } };
+    }
+
+    const filteredUsers = await User.find(filters);
+
+    res.status(200).json({
+      total: filteredUsers.length,
+      data: filteredUsers,
+      status: true,
+      message: "Filtered User Data",
+      statusCode: 200,
+    });
+  } catch (error) {
+    res.status(500).json(error.message);
+  }
+}
 
 async function deleteAllUsers(req, res) {
   try {
     const deletedUser = await User.deleteMany();
     if (!deletedUser) {
-      res.status(404).json({ message: 'All users deleted' });
+      res.status(404).json({ message: "All users deleted" });
       return;
     }
 
-    res.status(200).json({ message: 'All users successfully' });
+    res.status(200).json({ message: "All users successfully" });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to delete all user' });
+    res.status(500).json({ error: "Failed to delete all user" });
   }
-};
+}
 
 async function updateUser(req, res) {
   const uploadedImages = req.files;
   const userId = req.params.userId; // Assuming you're passing the user ID as a parameter
-
-
 
   try {
     const userData = req.body;
@@ -234,46 +305,52 @@ async function updateUser(req, res) {
           }
         });
       });
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: "User not found" });
     }
-
 
     // Update user properties
     existingUser.fullName = userData.fullName || existingUser.fullName;
     existingUser.dateOfBirth = userData.dateOfBirth || existingUser.dateOfBirth;
     existingUser.gender = userData.gender || existingUser.gender;
-    existingUser.interests = userData.interests ? JSON.parse(userData.interests) : existingUser.interests;
-    existingUser.discreetMode = userData.discreetMode ? JSON.parse(userData.discreetMode) : existingUser.discreetMode;
+    existingUser.interests = userData.interests
+      ? JSON.parse(userData.interests)
+      : existingUser.interests;
+    existingUser.discreetMode = userData.discreetMode
+      ? JSON.parse(userData.discreetMode)
+      : existingUser.discreetMode;
     existingUser.aboutYou = userData.aboutYou || existingUser.aboutYou;
-    existingUser.sexualOrientation = userData.sexualOrientation || existingUser.sexualOrientation;
+    existingUser.sexualOrientation =
+      userData.sexualOrientation || existingUser.sexualOrientation;
     existingUser.wantToSee = userData.wantToSee || existingUser.wantToSee;
     existingUser.lookingFor = userData.lookingFor || existingUser.lookingFor;
     existingUser.distance = userData.distance || existingUser.distance;
-    existingUser.ageRange = userData.ageRange ? JSON.parse(userData.ageRange) : existingUser.ageRange;
+    existingUser.ageRange = userData.ageRange
+      ? JSON.parse(userData.ageRange)
+      : existingUser.ageRange;
     existingUser.userType = userData.userType || existingUser.userType;
-    existingUser.subscriptionType = userData.subscriptionType || existingUser.subscriptionType
+    existingUser.subscriptionType =
+      userData.subscriptionType || existingUser.subscriptionType;
 
     // Update profile images if uploaded
     if (uploadedImages?.length > 0) {
       existingUser.profileImages = uploadedImages.map((image, index) => ({
         uri: image?.path,
-        orderId: index + 1
+        orderId: index + 1,
       }));
     }
 
     const updatedUser = await existingUser.save();
 
-
-    console.log("UPDATED USER ===========", updatedUser)
+    console.log("UPDATED USER ===========", updatedUser);
 
     res.status(200).json({
       data: updatedUser,
       status: true,
       message: "User updated successfully",
-      status: 200
+      status: 200,
     });
   } catch (error) {
-    console.log("ERROR =======", error)
+    console.log("ERROR =======", error);
     uploadedImages?.forEach((image) => {
       fs.unlink(image.path, (err) => {
         if (err) {
@@ -281,10 +358,9 @@ async function updateUser(req, res) {
         }
       });
     });
-    res.status(500).json({ error: 'Failed to update user' });
+    res.status(500).json({ error: "Failed to update user" });
   }
 }
-
 
 module.exports = {
   getUser,
@@ -295,7 +371,7 @@ module.exports = {
   deleteAllUsers,
   sendOTP,
   verifyOTP,
-  updateUser
+  updateUser,
+  filterUsers,
+  filteredUsersByInterests,
 };
-
-

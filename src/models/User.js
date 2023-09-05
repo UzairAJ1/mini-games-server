@@ -1,13 +1,11 @@
 const mongoose = require("mongoose");
 
-
 let UserSchema = new mongoose.Schema({
-
   mobileNumber: {
     type: String,
     default: "",
     duplicate: false,
-    required: true
+    required: true,
   },
   fullName: {
     type: String,
@@ -78,7 +76,7 @@ let UserSchema = new mongoose.Schema({
     type: String,
     default: "user",
     duplicate: false,
-    enum: ["user", "admin"]
+    enum: ["user", "admin"],
   },
 });
 const User = mongoose.model("User", UserSchema);

@@ -8,7 +8,9 @@ const {
   signIn,
   deleteAllUsers,
   sendOTP,
-  verifyOTP
+  verifyOTP,
+  filterUsers,
+  filteredUsersByInterests,
 } = require("./controllers");
 const path = require("path");
 const multer = require("multer");
@@ -26,17 +28,24 @@ const storage = multer.diskStorage({
   },
 });
 // Create the Multer upload object
-const upload = multer({ storage: storage, limits: { fileSize: 50 * 1024 * 1024 } });
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 50 * 1024 * 1024 },
+});
 const router = promiseRouter();
 const uploadImagesMiddleware = upload.array("profileImages");
 
 router.post("/addUser", uploadImagesMiddleware, addUser);
 
-router.post("/signIn", signIn)
+router.post("/signIn", signIn);
 
 router.get("/getUser/:id", getUser);
 
 router.get("/getUsers", getAllUsers);
+
+router.get("/filterUsers", filterUsers);
+
+router.get("/filteredUsersByInterests", filteredUsersByInterests);
 
 router.post("/sendOTP", sendOTP);
 
@@ -47,6 +56,5 @@ router.post("/deleteUser", deleteUser);
 router.post("/deleteAllUsers", deleteAllUsers);
 
 router.post("/updateUser/:userId", uploadImagesMiddleware, updateUser);
-
 
 module.exports = router;
