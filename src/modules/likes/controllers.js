@@ -3,12 +3,24 @@ const { Likes } = require("../../models/Likes"); // Adjust the path accordingly
 async function addLike(req, res) {
   const { likerUserId, likedUserId } = req.body;
   try {
-    const newLike = await Likes.create({ likerUserId, likedUserId });
-    res.status(200).json({
-      status: true,
-      message: "User liked successfully.",
-      data: newLike,
-    });
+    // Check if a like already exists for the same pair of users
+    const existingLike = await Likes.findOne({ likerUserId, likedUserId });
+
+    if (existingLike) {
+      res.status(400).json({
+        status: false,
+        message: "User has already liked this user.",
+        data: null,
+      });
+    } else {
+      // Create a new like if it doesn't exist
+      const newLike = await Likes.create({ likerUserId, likedUserId });
+      res.status(200).json({
+        status: true,
+        message: "User liked successfully.",
+        data: newLike,
+      });
+    }
   } catch (error) {
     res.status(500).json({
       status: false,
@@ -18,6 +30,7 @@ async function addLike(req, res) {
   }
 }
 
+
 async function deleteLike(req, res) {
   const deleteid = req.params.deleteid; // Assuming you're passing deleteid as a URL parameter
   try {
@@ -25,6 +38,23 @@ async function deleteLike(req, res) {
     res.status(200).json({
       status: true,
       message: "Like deleted successfully.",
+      data: null,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: "An error occurred while deleting the like.",
+      data: null,
+    });
+  }
+}
+
+async function deleteAllLikes(req, res) {
+  try {
+    await Likes.deleteMany();
+    res.status(200).json({
+      status: true,
+      message: "Likes deleted successfully.",
       data: null,
     });
   } catch (error) {
@@ -87,4 +117,5 @@ module.exports = {
   deleteLike,
   getUserLikes,
   getLikes,
+  deleteAllLikes,
 };

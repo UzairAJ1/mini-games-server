@@ -5,6 +5,7 @@ const {
   deleteLike,
   getUserLikes,
   getLikes,
+  deleteAllLikes,
 } = require("./controllers");
 
 router.post("/addLike", addLike);
@@ -13,6 +14,8 @@ router.post("/deleteLike", deleteLike);
 
 router.post("/getUserLikes", getUserLikes);
 
-router.post("/getLikes", getLikes);
+router.get("/getLikes", getLikes);
+
+router.delete("/deleteAllLikes", deleteAllLikes)
 
 module.exports = router;

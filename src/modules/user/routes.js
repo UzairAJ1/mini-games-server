@@ -51,10 +51,11 @@ router.post("/sendOTP", sendOTP);
 
 router.post("/verifyOTP", verifyOTP);
 
-router.post("/deleteUser", deleteUser);
+router.delete("/deleteUser/:userId", deleteUser);
 
-router.post("/deleteAllUsers", deleteAllUsers);
+router.delete("/deleteAllUsers", deleteAllUsers);
 
 router.post("/updateUser/:userId", uploadImagesMiddleware, updateUser);
+
 
 module.exports = router;

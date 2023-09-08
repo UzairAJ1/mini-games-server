@@ -219,48 +219,38 @@ async function getAllUsers(req, res) {
 
 async function filterUsers(req, res) {
   try {
-    const { gender, age, distance } = req.query;
+    const { gender, ageRange, distance, interests } = req.query;
 
-    const parsedAge = JSON.parse(age);
+    let filters = {}
 
-    const filters = {
-      "ageRange.start": { $gte: parsedAge.start },
-      "ageRange.end": { $lte: parsedAge.end },
-    };
+    if (ageRange) {
+      const parsedAgeRange = JSON.parse(ageRange);
+      filters.ageRange = {
+        start: 20,
+        end: 28
+      };
+
+      // if (parsedAgeRange.start !== undefined) {
+      //   start = parseInt(parsedAgeRange.start);
+      // }
+
+      // if (parsedAgeRange.end !== undefined) {
+      //   end = parseInt(parsedAgeRange.end);
+      // }
+    }
 
     if (gender) {
       filters.gender = gender;
     }
-
     if (distance) {
       filters.distance = { $lte: parseInt(distance) };
     }
-
-    const filteredUsers = await User.find(filters);
-
-    res.status(200).json({
-      toal: filteredUsers.length,
-      data: filteredUsers,
-      status: true,
-      message: "Filtered User Data",
-      status: 200,
-    });
-  } catch (error) {
-    res.status(500).json(error.message);
-  }
-}
-
-async function filteredUsersByInterests(req, res) {
-  try {
-    const { interests } = req.query;
-
-    let filters = {};
-
     if (interests) {
       const interestsArray = interests.split(",");
       filters = { interests: { $in: interestsArray } };
     }
 
+    console.log("FILTERS =======", filters)
     const filteredUsers = await User.find(filters);
 
     res.status(200).json({
@@ -268,26 +258,46 @@ async function filteredUsersByInterests(req, res) {
       data: filteredUsers,
       status: true,
       message: "Filtered User Data",
-      statusCode: 200,
+      status: 200,
     });
   } catch (error) {
-    res.status(500).json(error.message);
+    console.log("THE ERROR ===========", error)
+    res.status(500).json({
+      message: error.message
+    });
   }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+async function filteredUsersByInterests(req, res) {
+  const filteredUsers = await User.find({
+    ageRange: {
+      "start": 20,
+      "end": 28
+    }
+  });
 }
 
 async function deleteAllUsers(req, res) {
   try {
-    const deletedUser = await User.deleteMany();
-    if (!deletedUser) {
-      res.status(404).json({ message: "All users deleted" });
-      return;
-    }
-
-    res.status(200).json({ message: "All users successfully" });
+    await User.deleteMany();
+    res.status(200).json({ message: "All users deleted successfully" });
   } catch (error) {
     res.status(500).json({ error: "Failed to delete all user" });
   }
 }
+
 
 async function updateUser(req, res) {
   const uploadedImages = req.files;
