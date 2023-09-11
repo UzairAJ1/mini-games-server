@@ -72,6 +72,14 @@ let UserSchema = new mongoose.Schema({
     default: "",
     duplicate: false,
   },
+  email: {
+    type: String,
+    required: false
+  },
+  password: {
+    type: String,
+    required: false
+  },
   userType: {
     type: String,
     default: "user",
