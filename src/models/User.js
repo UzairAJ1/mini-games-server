@@ -74,11 +74,11 @@ let UserSchema = new mongoose.Schema({
   },
   email: {
     type: String,
-    required: false
+    required: false,
   },
   password: {
     type: String,
-    required: false
+    required: false,
   },
   userType: {
     type: String,
@@ -94,8 +94,12 @@ let UserSchema = new mongoose.Schema({
     long: {
       type: String,
       default: "",
-    }
-  }
+    },
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
 });
 const User = mongoose.model("User", UserSchema);
 module.exports = {

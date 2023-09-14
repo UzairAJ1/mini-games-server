@@ -30,7 +30,6 @@ async function addLike(req, res) {
   }
 }
 
-
 async function deleteLike(req, res) {
   const deleteid = req.params.deleteid; // Assuming you're passing deleteid as a URL parameter
   try {
@@ -85,7 +84,7 @@ async function getUserLikes(req, res) {
       status: true,
       message: "Liked users retrieved successfully.",
       data: likedUsers,
-      likeCount: likedUsers?.length
+      likeCount: likedUsers?.length,
     });
   } catch (error) {
     res.status(500).json({
@@ -113,10 +112,125 @@ async function getLikes(req, res) {
   }
 }
 
+const likesStats = async (req, res) => {
+  try {
+    const totalLikes = await Likes.countDocuments();
+
+    //Likes by male
+    const maleLikes = await Likes.aggregate([
+      {
+        $lookup: {
+          from: "users",
+          localField: "likerUserId",
+          foreignField: "_id",
+          as: "likerUser",
+        },
+      },
+      {
+        $match: {
+          "likerUser.gender": "male",
+        },
+      },
+      {
+        $count: "maleLikes",
+      },
+    ]);
+
+    //Likes by female
+    const femaleLikes = await Likes.aggregate([
+      {
+        $lookup: {
+          from: "users",
+          localField: "likerUserId",
+          foreignField: "_id",
+          as: "likerUser",
+        },
+      },
+      {
+        $match: {
+          "likerUser.gender": "female",
+        },
+      },
+      {
+        $count: "femaleLikes",
+      },
+    ]);
+
+    //Likes per day
+    const likesPerDay = await Likes.aggregate([
+      {
+        $addFields: {
+          formattedDate: {
+            $dateToString: {
+              format: "%Y-%m-%d",
+              date: { $toDate: "$createdAt" },
+              timezone: "UTC",
+            },
+          },
+        },
+      },
+      {
+        $group: {
+          _id: "$formattedDate",
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $sort: { _id: 1 },
+      },
+    ]);
+
+    //Likes per month
+    const likesPerMonth = await Likes.aggregate([
+      {
+        $addFields: {
+          formattedDate: {
+            $dateToString: {
+              format: "%Y-%m",
+              date: { $toDate: "$createdAt" },
+              timezone: "UTC",
+            },
+          },
+        },
+      },
+      {
+        $group: {
+          _id: "$formattedDate",
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $sort: { _id: 1 },
+      },
+    ]);
+
+    const likesStatistics = {
+      totalLikes,
+      maleLikes,
+      femaleLikes,
+      likesPerDay,
+      likesPerMonth,
+    };
+
+    res.status(200).json({
+      data: likesStatistics,
+      status: true,
+      message: "Likes Statistics",
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: "An error occurred while retrieving likes statistics.",
+      data: null,
+    });
+  }
+};
+
 module.exports = {
   addLike,
   deleteLike,
   getUserLikes,
   getLikes,
   deleteAllLikes,
+  likesStats,
 };
