@@ -86,6 +86,16 @@ let UserSchema = new mongoose.Schema({
     duplicate: false,
     enum: ["user", "admin"],
   },
+  location: {
+    lat: {
+      type: String,
+      default: "",
+    },
+    long: {
+      type: String,
+      default: "",
+    }
+  }
 });
 const User = mongoose.model("User", UserSchema);
 module.exports = {

@@ -130,7 +130,7 @@ async function verifyOTP(req, res) {
 			user?.gender &&
 			user?.interests?.length > 0 &&
 			user?.profileImages?.length > 0 &&
-			user?.discreetMode &&
+			user?.discreetMode != null &&
 			user?.subscriptionType &&
 			user?.aboutYou &&
 			user?.sexualOrientation &&
@@ -174,10 +174,29 @@ async function getUser(req, res) {
 			res.status(404).json({ message: "User not found" });
 			return;
 		}
+		let isComplete = false;
+		if (
+			user?.fullName &&
+			user?.dateOfBirth &&
+			user?.gender &&
+			user?.interests?.length > 0 &&
+			user?.profileImages?.length > 0 &&
+			user?.discreetMode != null &&
+			user?.subscriptionType &&
+			user?.aboutYou &&
+			user?.sexualOrientation &&
+			user?.lookingFor &&
+			user?.wantToSee &&
+			user?.distance &&
+			user?.ageRange
+		) {
+			console.log("IM HERE COMPLETE ");
+			isComplete = true;
+		}
 		res.status(200).json({
-			data: user,
+			data: { ...user?._doc, isComplete },
 			status: true,
-			message: "User data",
+			message: "success",
 			status: 200,
 		});
 	} catch (error) {
@@ -260,23 +279,20 @@ async function getAllUsers(req, res) {
 
 async function filterUsers(req, res) {
 	try {
-		const { gender, ageRange, distance, interests } = req.query;
+		const { gender, ageRange, distance, interests } = req.body;
 
 		let filters = {};
 
 		if (ageRange) {
-			const parsedAgeRange = JSON.parse(ageRange);
 			filters.$and = [
-				{ 'ageRange.start': { $lte: parsedAgeRange.end } },
-				{ 'ageRange.end': { $gte: parsedAgeRange.start } }
+				{ 'ageRange.start': { $lte: ageRange.end } },
+				{ 'ageRange.end': { $gte: ageRange.start } }
 			];
 		}
 		if (gender) {
 			filters.gender = gender;
 		}
-		if (distance) {
-			filters.distance = { $lte: parseInt(distance) };
-		}
+
 		if (interests) {
 			const interestsArray = interests.split(",");
 			filters.interests = { $in: interestsArray };
@@ -286,10 +302,10 @@ async function filterUsers(req, res) {
 		const filteredUsers = await User.find(filters);
 
 		res.status(200).json({
-			total: filteredUsers.length,
 			data: filteredUsers,
 			status: true,
 			message: "Filtered User Data",
+			totalFiltered: filteredUsers.length,
 			status: 200,
 		});
 	} catch (error) {
@@ -299,10 +315,6 @@ async function filterUsers(req, res) {
 		});
 	}
 }
-
-
-
-
 
 async function filteredUsersByInterests(req, res) {
 	const filteredUsers = await User.find({
@@ -321,7 +333,6 @@ async function deleteAllUsers(req, res) {
 		res.status(500).json({ error: "Failed to delete all user" });
 	}
 }
-
 
 async function updateUser(req, res) {
 	const uploadedImages = req.files;
@@ -372,13 +383,29 @@ async function updateUser(req, res) {
 				orderId: index + 1,
 			}));
 		}
-
 		const updatedUser = await existingUser.save();
-
 		console.log("UPDATED USER ===========", updatedUser);
-
+		let isComplete = false;
+		if (
+			updatedUser?.fullName &&
+			updatedUser?.dateOfBirth &&
+			updatedUser?.gender &&
+			updatedUser?.interests?.length > 0 &&
+			updatedUser?.profileImages?.length > 0 &&
+			updatedUser?.discreetMode != null &&
+			updatedUser?.subscriptionType &&
+			updatedUser?.aboutYou &&
+			updatedUser?.sexualOrientation &&
+			updatedUser?.lookingFor &&
+			updatedUser?.wantToSee &&
+			updatedUser?.distance &&
+			updatedUser?.ageRange
+		) {
+			console.log("IM HERE COMPLETE ");
+			isComplete = true;
+		}
 		res.status(200).json({
-			data: updatedUser,
+			data: { ...updatedUser?._doc, isComplete },
 			status: true,
 			message: "User updated successfully",
 			status: 200,
@@ -386,6 +413,7 @@ async function updateUser(req, res) {
 	} catch (error) {
 		console.log("ERROR =======", error);
 		uploadedImages?.forEach((image) => {
+			console.log("THE IMAGES ======", image?.path)
 			fs.unlink(image.path, (err) => {
 				if (err) {
 					console.log("Error deleting uploaded image:", err);

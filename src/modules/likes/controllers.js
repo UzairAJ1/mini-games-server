@@ -85,6 +85,7 @@ async function getUserLikes(req, res) {
       status: true,
       message: "Liked users retrieved successfully.",
       data: likedUsers,
+      likeCount: likedUsers?.length
     });
   } catch (error) {
     res.status(500).json({

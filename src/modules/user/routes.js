@@ -46,7 +46,7 @@ router.post("/login", login);
 
 router.get("/getUsers", getAllUsers);
 
-router.get("/filterUsers", filterUsers);
+router.post("/filterUsers", filterUsers);
 
 router.get("/filteredUsersByInterests", filteredUsersByInterests);
 
