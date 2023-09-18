@@ -1,41 +1,36 @@
 const mongoose = require("mongoose");
 
 let GlobalSettingsSchema = new mongoose.Schema({
-    zodiacLimit: {
-        type: String,
-        required: false,
-        default: "",
-        duplicate: false
-    },
-    likeInteractionLimit: {
-        freeGifts: {
-            type: String,
-            required: false,
-            default: "",
-            duplicate: false
-        },
-        paidGifts: {
-            type: String,
-            required: false,
-            default: "",
-            duplicate: false
-        },
-        giftRenewalTime: {
-            type: String,
-            required: false,
-            default: "",
-            duplicate: false
-        }
-    },
-    likeTimerLimit: {
-        type: String,
-        required: false,
-        default: "",
-        duplicate: false
+  zodiacLimit: {
+    type: Number,
+    default: 10,
+  },
+
+  likeInteractionLimit: {
+    freeGifts: {
+      type: Number,
+      default: 50,
     },
 
+    paidGifts: {
+      type: Number,
+      default: 10,
+    },
+
+    giftRenewalTime: {
+      type: Number,
+      default: 24,
+    },
+  },
+
+  likeTimerLimit: {
+    type: Number,
+    default: 20,
+  },
 });
+
 const GlobalSettings = mongoose.model("GlobalSettings", GlobalSettingsSchema);
+
 module.exports = {
-    GlobalSettings,
+  GlobalSettings,
 };

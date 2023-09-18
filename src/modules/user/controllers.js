@@ -1,5 +1,6 @@
 const { User } = require("../../models/User"); // Make sure to adjust the path accordingly
 const fs = require("fs");
+const moment = require("moment");
 
 // Add user
 async function addUser(req, res) {
@@ -279,7 +280,7 @@ async function getAllUsers(req, res) {
 
 async function filterUsers(req, res) {
   try {
-    const { gender, ageRange, distance, interests } = req.body;
+    const { gender, ageRange, interests } = req.body;
 
     let filters = {};
 
@@ -298,7 +299,6 @@ async function filterUsers(req, res) {
       filters.interests = { $in: interestsArray };
     }
 
-    console.log("FILTERS =======", filters);
     const filteredUsers = await User.find(filters);
 
     res.status(200).json({
@@ -314,15 +314,6 @@ async function filterUsers(req, res) {
       message: error.message,
     });
   }
-}
-
-async function filteredUsersByInterests(req, res) {
-  const filteredUsers = await User.find({
-    ageRange: {
-      start: 20,
-      end: 28,
-    },
-  });
 }
 
 async function deleteAllUsers(req, res) {
@@ -429,17 +420,19 @@ const usersStats = async (req, res) => {
     const totalUsers = await User.countDocuments();
     const maleUsers = await User.countDocuments({ gender: "male" });
     const femaleUsers = await User.countDocuments({ gender: "female" });
+    const activeUsers = await User.countDocuments({ status: "active" });
 
-    const twoWeeksAgo = new Date();
-    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+    const twoWeeksAgo = moment().subtract(2, "weeks").toDate();
+
     const newUsers = await User.countDocuments({
-      createdAt: { $gte: twoWeeksAgo },
+      createdAt: { $gte: twoWeeksAgo, $lte: new Date() },
     });
 
     const userStatistics = {
       totalUsers,
       maleUsers,
       femaleUsers,
+      activeUsers,
       newUsers,
     };
 
@@ -450,6 +443,43 @@ const usersStats = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ status: false, message: "Internal Server Error" });
+  }
+};
+
+const updateUserStatus = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { status } = req.body;
+
+    if (!userId || !status) {
+      return res
+        .status(400)
+        .json({ message: "User ID and status are required" });
+    }
+
+    if (!["active", "banned"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { status },
+      { new: true }
+    );
+
+    res.status(200).json({
+      status: true,
+      message: "Status updated successfully",
+      user: updatedUser,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
@@ -465,6 +495,6 @@ module.exports = {
   verifyOTP,
   updateUser,
   filterUsers,
-  filteredUsersByInterests,
   usersStats,
+  updateUserStatus,
 };

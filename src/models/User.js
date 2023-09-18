@@ -98,14 +98,15 @@ let UserSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["active", "banned"],
     default: "active",
+    enum: ["active", "banned"],
   },
   createdAt: {
     type: Date,
     default: Date.now,
   },
 });
+
 const User = mongoose.model("User", UserSchema);
 module.exports = {
   User,
