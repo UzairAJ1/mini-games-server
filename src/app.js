@@ -2,9 +2,10 @@ const express = require("express");
 const requestLogger = require("morgan");
 const cors = require("cors");
 const indexRouter = require("./modules/index/routes");
-const userRouter = require("./modules/user/routes")
-const likeRouter = require("./modules/likes/routes")
-const globalSettingsRouter = require("./modules/globalSettings/routes")
+const userRouter = require("./modules/user/routes");
+const likeRouter = require("./modules/likes/routes");
+const globalSettingsRouter = require("./modules/globalSettings/routes");
+const paymentPlanRouter = require("./modules/PaymentPlan/routes");
 const app = express();
 const path = require("path");
 app.use(requestLogger("tiny"));
@@ -20,7 +21,7 @@ app.use("/", indexRouter);
 app.use("/user", userRouter);
 app.use("/like", likeRouter);
 app.use("/global", globalSettingsRouter);
-
+app.use("/payment", paymentPlanRouter);
 
 app.use(function (error, req, res, next) {
   if (!res.headersSent && error.statusCode) {
