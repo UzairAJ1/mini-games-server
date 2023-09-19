@@ -420,7 +420,9 @@ const usersStats = async (req, res) => {
     const totalUsers = await User.countDocuments();
     const maleUsers = await User.countDocuments({ gender: "male" });
     const femaleUsers = await User.countDocuments({ gender: "female" });
-    const activeUsers = await User.countDocuments({ status: "active" });
+    const activeUsers = (await User.find()).filter(
+      (user) => user.status === "active"
+    ).length;
 
     const twoWeeksAgo = moment().subtract(2, "weeks").toDate();
 
