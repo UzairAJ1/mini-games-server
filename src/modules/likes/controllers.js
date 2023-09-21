@@ -113,10 +113,44 @@ async function getLikes(req, res) {
   }
 }
 
+
+async function getUserLikesData(req, res) {
+  const { userId, type } = req.body;
+  try {
+    let likedUsers;
+    if (type === "given") {
+      likedUsers = await Likes.find({ likerUserId: userId }).populate("likerUserId").populate("likedUserId");
+    } else if (type === "received") {
+      likedUsers = await Likes.find({ likedUserId: userId }).populate("likedUserId").populate("likerUserId");
+    } else {
+      return res.status(400).json({
+        status: false,
+        message: "Invalid type specified.",
+        data: null,
+      });
+    }
+    res.status(200).json({
+      status: true,
+      message: "Liked users retrieved successfully.",
+      data: likedUsers,
+      likeCount: likedUsers?.length
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: "An error occurred while retrieving liked users.",
+      data: null,
+    });
+  }
+}
+
+
+
 module.exports = {
   addLike,
   deleteLike,
   getUserLikes,
   getLikes,
   deleteAllLikes,
+  getUserLikesData
 };

@@ -128,7 +128,7 @@ async function verifyOTP(req, res) {
 			user?.fullName &&
 			user?.dateOfBirth &&
 			user?.gender &&
-			user?.interests?.length > 0 &&
+			// user?.interests?.length > 0 &&
 			user?.profileImages?.length > 0 &&
 			user?.discreetMode != null &&
 			user?.subscriptionType &&
@@ -179,7 +179,7 @@ async function getUser(req, res) {
 			user?.fullName &&
 			user?.dateOfBirth &&
 			user?.gender &&
-			user?.interests?.length > 0 &&
+			// user?.interests?.length > 0 &&
 			user?.profileImages?.length > 0 &&
 			user?.discreetMode != null &&
 			user?.subscriptionType &&
@@ -279,8 +279,8 @@ async function getAllUsers(req, res) {
 
 async function filterUsers(req, res) {
 	try {
-		const { gender, ageRange, distance, interests } = req.body;
-
+		const { gender, ageRange, distance, interests, location } = req.body;
+		console.log("COMPLETE FILTERS ========", req.body)
 		let filters = {};
 
 		if (ageRange) {
@@ -298,6 +298,16 @@ async function filterUsers(req, res) {
 			filters.interests = { $in: interestsArray };
 		}
 
+		// if (location) {
+		// 	const { lat, long } = location;
+		// 	const maxDistance = 10 * 1000; // 10 km in meters
+		// 	filters.location = {
+		// 		$geoWithin: {
+		// 			$centerSphere: [[long, lat], maxDistance / 6371] // Earth's radius is approximately 6371 km
+		// 		}
+		// 	};
+		// }
+
 		console.log("FILTERS =======", filters);
 		const filteredUsers = await User.find(filters);
 
@@ -306,6 +316,7 @@ async function filterUsers(req, res) {
 			status: true,
 			message: "Filtered User Data",
 			totalFiltered: filteredUsers.length,
+			appliedFilters: req.body,
 			status: 200,
 		});
 	} catch (error) {
@@ -315,6 +326,59 @@ async function filterUsers(req, res) {
 		});
 	}
 }
+
+
+// OR CONDITION FILTER BELOW
+
+// async function filterUsers(req, res) {
+// 	try {
+// 		const { gender, ageRange, distance, interests, location } = req.body;
+// 		console.log("COMPLETE FILTERS ========", req.body);
+// 		let filters = {};
+
+// 		const orConditions = []; // Initialize an array for $or conditions
+
+// 		if (ageRange) {
+// 			orConditions.push({
+// 				$and: [
+// 					{ 'ageRange.start': { $lte: ageRange.end } },
+// 					{ 'ageRange.end': { $gte: ageRange.start } }
+// 				]
+// 			});
+// 		}
+
+// 		if (gender) {
+// 			orConditions.push({ gender: gender });
+// 		}
+
+// 		if (interests) {
+// 			const interestsArray = interests.split(",");
+// 			orConditions.push({ interests: { $in: interestsArray } });
+// 		}
+
+// 		if (orConditions.length > 0) {
+// 			// If there are $or conditions, set them in the filters
+// 			filters.$or = orConditions;
+// 		}
+
+// 		console.log("FILTERS =======", filters);
+// 		const filteredUsers = await User.find(filters);
+
+// 		res.status(200).json({
+// 			data: filteredUsers,
+// 			status: true,
+// 			message: "Filtered User Data",
+// 			totalFiltered: filteredUsers.length,
+// 			appliedFilters: req.body,
+// 			status: 200,
+// 		});
+// 	} catch (error) {
+// 		console.log("THE ERROR ===========", error);
+// 		res.status(500).json({
+// 			message: error.message
+// 		});
+// 	}
+// }
 
 async function filteredUsersByInterests(req, res) {
 	const filteredUsers = await User.find({
@@ -340,6 +404,13 @@ async function updateUser(req, res) {
 
 	try {
 		const userData = req.body;
+		let orderIds = []
+		if (req?.body?.orderIds) {
+			orderIds = JSON.parse(req?.body?.orderIds)
+		}
+		console.log("GET ORDER IDS ======", orderIds)
+		console.log("FILES ==========", uploadedImages)
+
 		const existingUser = await User.findById(userId);
 
 		if (!existingUser) {
@@ -372,16 +443,31 @@ async function updateUser(req, res) {
 		existingUser.ageRange = userData.ageRange
 			? JSON.parse(userData.ageRange)
 			: existingUser.ageRange;
+		existingUser.location = userData.location
+			? JSON.parse(userData.location)
+			: existingUser.location;
 		existingUser.userType = userData.userType || existingUser.userType;
 		existingUser.subscriptionType =
 			userData.subscriptionType || existingUser.subscriptionType;
-
 		// Update profile images if uploaded
-		if (uploadedImages?.length > 0) {
-			existingUser.profileImages = uploadedImages.map((image, index) => ({
+		// if (uploadedImages?.length > 0 && orderIds?.length > 0) {
+		// 	existingUser.profileImages = uploadedImages.map((image, index) => ({
+		// 		uri: image?.path,
+		// 		orderId: orderIds[index],
+		// 	}));
+		// }
+		if (uploadedImages?.length > 0 && orderIds?.length > 0) {
+			const newProfileImages = uploadedImages.map((image, index) => ({
 				uri: image?.path,
-				orderId: index + 1,
+				orderId: orderIds[index],
 			}));
+			for (const existingImage of existingUser.profileImages) {
+				if (newProfileImages.some((newImage) => newImage.orderId === existingImage.orderId)) {
+					fs.unlink(existingImage.uri, (err) => { if (err) { console.log("Error deleting existing image:", err); } });
+					existingUser.profileImages = existingUser.profileImages.filter((image) => image.orderId !== existingImage.orderId)
+				}
+			}
+			existingUser.profileImages = existingUser.profileImages.concat(newProfileImages);
 		}
 		const updatedUser = await existingUser.save();
 		console.log("UPDATED USER ===========", updatedUser);
@@ -390,7 +476,7 @@ async function updateUser(req, res) {
 			updatedUser?.fullName &&
 			updatedUser?.dateOfBirth &&
 			updatedUser?.gender &&
-			updatedUser?.interests?.length > 0 &&
+			// updatedUser?.interests?.length > 0 &&
 			updatedUser?.profileImages?.length > 0 &&
 			updatedUser?.discreetMode != null &&
 			updatedUser?.subscriptionType &&
@@ -424,6 +510,34 @@ async function updateUser(req, res) {
 	}
 }
 
+async function addGift(req, res) {
+	try {
+		const { type, text, userId } = req.body;
+		const user = await User.findById(userId);
+
+		if (!user) {
+			return res.status(404).json({ message: "User not found" });
+		}
+		const gift = {
+			type,
+			text,
+		};
+		user.myGiftsCollection.push(gift);
+		await user.save();
+
+		res.status(200).json({
+			status: true,
+			message: "Gift added successfully.",
+		});
+	} catch (error) {
+		res.status(500).json({
+			status: false,
+			message: "An error occurred while adding gift for the user.",
+			data: null,
+		});
+	}
+}
+
 module.exports = {
 	getUser,
 	login,
@@ -437,4 +551,6 @@ module.exports = {
 	updateUser,
 	filterUsers,
 	filteredUsersByInterests,
+	addGift
 };
+

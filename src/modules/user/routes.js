@@ -12,6 +12,7 @@ const {
 	filterUsers,
 	filteredUsersByInterests,
 	login,
+	addGift,
 } = require("./controllers");
 const path = require("path");
 const multer = require("multer");
@@ -60,5 +61,6 @@ router.delete("/deleteAllUsers", deleteAllUsers);
 
 router.post("/updateUser/:userId", uploadImagesMiddleware, updateUser);
 
+router.post("/addGift", addGift)
 
 module.exports = router;

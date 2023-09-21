@@ -1,5 +1,10 @@
 const mongoose = require("mongoose");
 
+const GiftSchema = new mongoose.Schema({
+  type: String,
+  text: String,
+});
+
 let UserSchema = new mongoose.Schema({
   mobileNumber: {
     type: String,
@@ -88,14 +93,15 @@ let UserSchema = new mongoose.Schema({
   },
   location: {
     lat: {
-      type: String,
-      default: "",
+      type: Number,
+      default: null,
     },
     long: {
-      type: String,
-      default: "",
+      type: Number,
+      default: null,
     }
-  }
+  },
+  myGiftsCollection: [GiftSchema],
 });
 const User = mongoose.model("User", UserSchema);
 module.exports = {
