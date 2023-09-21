@@ -2,17 +2,7 @@ const { PaymentPlan } = require("../../models/PaymentPlan");
 
 const addPaymentPlan = async (req, res) => {
   try {
-    const { name, description, amount, likesLimit, resetDuration } = req.body;
-
-    const paymentPlan = new PaymentPlan({
-      name,
-      description,
-      amount,
-      likesLimit,
-      resetDuration,
-    });
-
-    await paymentPlan.save();
+    const paymentPlan = await PaymentPlan.create(req.body);
 
     res.status(200).json({
       status: true,
@@ -20,7 +10,9 @@ const addPaymentPlan = async (req, res) => {
       data: paymentPlan,
     });
   } catch (error) {
-    res.status(500).json({ error: "Failed to create payment plan." });
+    res
+      .status(500)
+      .json({ success: false, error: "Failed to create payment plan." });
   }
 };
 
@@ -34,7 +26,35 @@ const getPaymentPlans = async (req, res) => {
       data: paymentPlans,
     });
   } catch (error) {
-    res.status(500).json({ error: "Failed to retrieve payment plans." });
+    res
+      .status(500)
+      .json({ success: false, error: "Failed to retrieve payment plans." });
+  }
+};
+
+const getPaymentPlanById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const paymentPlan = await PaymentPlan.findById(id);
+
+    if (!paymentPlan) {
+      res.status(404).json({
+        message: false,
+        error: "Payment plan not found.",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Payment plan retrieved successfully.",
+      data: paymentPlan,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: "Failed to retrieve payment plan.",
+    });
   }
 };
 
@@ -92,6 +112,7 @@ const deletePaymentPlan = async (req, res) => {
 module.exports = {
   addPaymentPlan,
   getPaymentPlans,
+  getPaymentPlanById,
   updatePaymentPlan,
   deletePaymentPlan,
 };

@@ -21,9 +21,29 @@ let PaymentPlanSchema = new mongoose.Schema({
     required: [true, "Please add likes limit"],
   },
 
+  spinsLimit: {
+    type: Number,
+    required: [true, "Please add spins limit"],
+  },
+
+  giftsLimit: {
+    type: Number,
+    required: [true, "Please add gifts limit"],
+  },
+
   resetDuration: {
     type: Number,
     required: [true, "Please add reset duration"],
+  },
+
+  seeLikes: {
+    type: Boolean,
+    required: true,
+  },
+
+  transactionId: {
+    type: String,
+    required: [true, "Please add transaction id"],
   },
 });
 

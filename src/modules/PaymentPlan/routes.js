@@ -3,13 +3,15 @@ const router = promiseRouter();
 const {
   addPaymentPlan,
   getPaymentPlans,
+  getPaymentPlanById,
   updatePaymentPlan,
   deletePaymentPlan,
 } = require("./controller");
 
-router.post("/paymentPlan", addPaymentPlan);
-router.get("/paymentPlan", getPaymentPlans);
-router.put("/paymentPlan/:id", updatePaymentPlan);
-router.delete("/paymentPlan/:id", deletePaymentPlan);
+router.post("/", addPaymentPlan);
+router.get("/", getPaymentPlans);
+router.get("/:id", getPaymentPlanById);
+router.put("/:id", updatePaymentPlan);
+router.delete("/:id", deletePaymentPlan);
 
 module.exports = router;
