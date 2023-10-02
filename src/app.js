@@ -5,8 +5,9 @@ const indexRouter = require("./modules/index/routes");
 const userRouter = require("./modules/user/routes")
 const likeRouter = require("./modules/likes/routes")
 const giftRouter = require("./modules/gifts/routes")
-
-const globalSettingsRouter = require("./modules/globalSettings/routes")
+const globalSettingsRouter = require("./modules/globalSettings/routes");
+const paymentPlanRouter = require("./modules/PaymentPlan/routes");
+const featureRouter = require("./modules/Feature/routes");
 const app = express();
 const path = require("path");
 app.use(requestLogger("tiny"));
@@ -23,7 +24,8 @@ app.use("/user", userRouter);
 app.use("/like", likeRouter);
 app.use("/global", globalSettingsRouter);
 app.use("/gift", giftRouter)
-
+app.use("/paymentPlans", paymentPlanRouter);
+app.use("/features", featureRouter);
 
 app.use(function (error, req, res, next) {
   if (!res.headersSent && error.statusCode) {

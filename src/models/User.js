@@ -79,11 +79,11 @@ let UserSchema = new mongoose.Schema({
   },
   email: {
     type: String,
-    required: false
+    required: false,
   },
   password: {
     type: String,
-    required: false
+    required: false,
   },
   userType: {
     type: String,
@@ -97,12 +97,29 @@ let UserSchema = new mongoose.Schema({
       default: null,
     },
     long: {
+<<<<<<< HEAD
       type: Number,
       default: null,
     }
   },
   myGiftsCollection: [GiftSchema],
+=======
+      type: String,
+      default: "",
+    },
+  },
+  status: {
+    type: String,
+    default: "active",
+    enum: ["active", "banned"],
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+>>>>>>> 1b9c9b0aa02e38ec6a8b74c68343653f9f677cba
 });
+
 const User = mongoose.model("User", UserSchema);
 module.exports = {
   User,

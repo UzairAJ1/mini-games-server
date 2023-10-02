@@ -10,8 +10,9 @@ const {
 	sendOTP,
 	verifyOTP,
 	filterUsers,
-	filteredUsersByInterests,
 	login,
+	usersStats,
+	updateUserStatus,
 	addGift,
 } = require("./controllers");
 const path = require("path");
@@ -50,8 +51,6 @@ router.get("/getUsers", getAllUsers);
 
 router.post("/filterUsers", filterUsers);
 
-router.get("/filteredUsersByInterests", filteredUsersByInterests);
-
 router.post("/sendOTP", sendOTP);
 
 router.post("/verifyOTP", verifyOTP);
@@ -63,5 +62,9 @@ router.delete("/deleteAllUsers", deleteAllUsers);
 router.post("/updateUser/:userId", uploadImagesMiddleware, updateUser);
 
 router.post("/addGift", addGift)
+
+router.get("/usersStats", usersStats);
+
+router.put("/:userId/status", updateUserStatus);
 
 module.exports = router;

@@ -1,5 +1,6 @@
 const { User } = require("../../models/User"); // Make sure to adjust the path accordingly
 const fs = require("fs");
+const moment = require("moment");
 
 // Add user
 async function addUser(req, res) {
@@ -209,12 +210,14 @@ async function login(req, res) {
 	try {
 		const { email, password } = req.body; // Assuming you're passing the user ID as a parameter
 		if (!email || !password) {
-			return res.status(400).json({ message: 'Both email and password are required' });
+			return res
+				.status(400)
+				.json({ message: "Both email and password are required" });
 		}
 
 		const user = await User.findOne({ email: email });
 
-		console.log({ email })
+		console.log({ email });
 
 		if (!user) {
 			res.status(404).json({ message: "User not found" });
@@ -244,7 +247,6 @@ async function login(req, res) {
 		res.status(500).json({ error: "Failed to get user" });
 	}
 }
-
 
 // Delete user
 async function deleteUser(req, res) {
@@ -539,6 +541,75 @@ async function addGift(req, res) {
 		});
 	}
 }
+const usersStats = async (req, res) => {
+	try {
+		const totalUsers = await User.countDocuments();
+		const maleUsers = await User.countDocuments({ gender: "male" });
+		const femaleUsers = await User.countDocuments({ gender: "female" });
+		const activeUsers = (await User.find()).filter(
+			(user) => user.status === "active"
+		).length;
+
+		const twoWeeksAgo = moment().subtract(2, "weeks").toDate();
+
+		const newUsers = await User.countDocuments({
+			createdAt: { $gte: twoWeeksAgo, $lte: new Date() },
+		});
+
+		const userStatistics = {
+			totalUsers,
+			maleUsers,
+			femaleUsers,
+			activeUsers,
+			newUsers,
+		};
+
+		res.status(200).json({
+			data: userStatistics,
+			status: true,
+			message: "User Statistics",
+		});
+	} catch (error) {
+		res.status(500).json({ status: false, message: "Internal Server Error" });
+	}
+};
+
+const updateUserStatus = async (req, res) => {
+	try {
+		const { userId } = req.params;
+		const { status } = req.body;
+
+		if (!userId || !status) {
+			return res
+				.status(400)
+				.json({ message: "User ID and status are required" });
+		}
+
+		if (!["active", "banned"].includes(status)) {
+			return res.status(400).json({ message: "Invalid status" });
+		}
+
+		const user = await User.findById(userId);
+
+		if (!user) {
+			return res.status(404).json({ message: "User not found" });
+		}
+
+		const updatedUser = await User.findByIdAndUpdate(
+			userId,
+			{ status },
+			{ new: true }
+		);
+
+		res.status(200).json({
+			status: true,
+			message: "Status updated successfully",
+			user: updatedUser,
+		});
+	} catch (error) {
+		res.status(500).json({ message: "Internal server error" });
+	}
+};
 
 module.exports = {
 	getUser,
@@ -553,6 +624,8 @@ module.exports = {
 	updateUser,
 	filterUsers,
 	filteredUsersByInterests,
-	addGift
+	addGift,
+	usersStats,
+	updateUserStatus
 };
 
