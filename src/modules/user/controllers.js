@@ -223,8 +223,9 @@ async function login(req, res) {
 		if (user) {
 			console.log({ user })
 			if (user.password == password) {
+				const token = jwt.sign({ sub: user._id }, process.env.JWTTOKEN);
 				res.status(200).json({
-					data: user,
+					data: { ...user._doc, token },
 					status: true,
 					message: "User data",
 					status: 200,
@@ -282,13 +283,14 @@ async function filterUsers(req, res) {
 		const { gender, ageRange, distance, interests, location } = req.body;
 		console.log("COMPLETE FILTERS ========", req.body)
 		let filters = {};
-
+		filters.discreetMode = false
 		if (ageRange) {
 			filters.$and = [
 				{ 'ageRange.start': { $lte: ageRange.end } },
 				{ 'ageRange.end': { $gte: ageRange.start } }
 			];
 		}
+
 		if (gender) {
 			filters.gender = gender;
 		}

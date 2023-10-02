@@ -16,6 +16,7 @@ const {
 } = require("./controllers");
 const path = require("path");
 const multer = require("multer");
+const { verifyJwtToken } = require("../../middleware/jwtTester");
 const storage = multer.diskStorage({
 	destination: (req, file, cb) => {
 		// Specify the destination folder where the uploaded files will be stored
