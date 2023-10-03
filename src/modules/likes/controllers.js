@@ -1,3 +1,4 @@
+const { default: mongoose } = require("mongoose");
 const { Likes } = require("../../models/Likes"); // Adjust the path accordingly
 
 async function addLike(req, res) {
@@ -112,15 +113,18 @@ async function getLikes(req, res) {
   }
 }
 
-
 async function getUserLikesData(req, res) {
   const { userId, type } = req.body;
   try {
     let likedUsers;
     if (type === "given") {
-      likedUsers = await Likes.find({ likerUserId: userId }).populate("likerUserId").populate("likedUserId");
+      likedUsers = await Likes.find({ likerUserId: userId })
+        .populate("likerUserId")
+        .populate("likedUserId");
     } else if (type === "received") {
-      likedUsers = await Likes.find({ likedUserId: userId }).populate("likedUserId").populate("likerUserId");
+      likedUsers = await Likes.find({ likedUserId: userId })
+        .populate("likedUserId")
+        .populate("likerUserId");
     } else {
       return res.status(400).json({
         status: false,
@@ -132,7 +136,7 @@ async function getUserLikesData(req, res) {
       status: true,
       message: "Liked users retrieved successfully.",
       data: likedUsers,
-      likeCount: likedUsers?.length
+      likeCount: likedUsers?.length,
     });
   } catch (error) {
     res.status(500).json({
@@ -140,6 +144,127 @@ async function getUserLikesData(req, res) {
       message: "An error occurred while retrieving liked users.",
       data: null,
     });
+  }
+}
+
+async function getMatches(req, res) {
+  const { userId } = req.query;
+  try {
+    const matches = await Likes.aggregate([
+      {
+        $match: {
+          $or: [
+            { likerUserId: mongoose.Types.ObjectId(userId) },
+            { likedUserId: mongoose.Types.ObjectId(userId) },
+          ],
+        },
+      },
+      {
+        $lookup: {
+          from: "likes",
+          let: { likedUserId: "$likedUserId", likerUserId: "$likerUserId" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$likedUserId", "$$likerUserId"] },
+                    { $eq: ["$likerUserId", "$$likedUserId"] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: "match",
+        },
+      },
+      {
+        $unwind: "$match",
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "likerUserId",
+          foreignField: "_id",
+          as: "likerUser",
+        },
+      },
+      {
+        $unwind: "$likerUser",
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "likedUserId",
+          foreignField: "_id",
+          as: "likedUser",
+        },
+      },
+      {
+        $unwind: "$likedUser",
+      },
+      {
+        $project: {
+          likerUserId: 1,
+          likedUserId: 1,
+        },
+      },
+      {
+        $group: {
+          _id: {
+            $cond: {
+              if: { $gte: ["$likerUserId", "$likedUserId"] },
+              then: "$likerUserId",
+              else: "$likedUserId",
+            },
+          },
+          likerUserId: { $first: "$likerUserId" },
+          likedUserId: { $first: "$likedUserId" },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          likerUserId: 1,
+          likedUserId: 1,
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "likerUserId",
+          foreignField: "_id",
+          as: "likerUserDetails",
+        },
+      },
+      {
+        $unwind: "$likerUserDetails",
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "likedUserId",
+          foreignField: "_id",
+          as: "likedUserDetails",
+        },
+      },
+      {
+        $unwind: "$likedUserDetails",
+      },
+      {
+        $project: {
+          likerUserId: 1,
+          likedUserId: 1,
+          likerUserDetails: 1, // Include likerUser details
+          likedUserDetails: 1, // Include likedUser details
+        },
+      },
+    ]);
+
+    res.json(matches);
+  } catch (error) {
+    console.error("Error getting matches:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 }
 
@@ -257,9 +382,6 @@ const likesStats = async (req, res) => {
   }
 };
 
-
-
-
 module.exports = {
   addLike,
   deleteLike,
@@ -267,5 +389,6 @@ module.exports = {
   getLikes,
   deleteAllLikes,
   getUserLikesData,
-  likesStats
+  likesStats,
+  getMatches,
 };
