@@ -8,6 +8,7 @@ const {
   deleteAllLikes,
   getUserLikesData,
   likesStats,
+  getMatches,
 } = require("./controllers");
 
 router.post("/addLike", addLike);
@@ -20,9 +21,10 @@ router.get("/getLikes", getLikes);
 
 router.delete("/deleteAllLikes", deleteAllLikes);
 
-router.post("/getUserLikesData", getUserLikesData)
+router.post("/getUserLikesData", getUserLikesData);
 
 router.get("/likesStats", likesStats);
 
+router.get("/getMatches", getMatches);
 
 module.exports = router;
