@@ -97,17 +97,11 @@ let UserSchema = new mongoose.Schema({
       default: null,
     },
     long: {
-<<<<<<< HEAD
       type: Number,
       default: null,
     }
   },
   myGiftsCollection: [GiftSchema],
-=======
-      type: String,
-      default: "",
-    },
-  },
   status: {
     type: String,
     default: "active",
@@ -117,7 +111,6 @@ let UserSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
->>>>>>> 1b9c9b0aa02e38ec6a8b74c68343653f9f677cba
 });
 
 const User = mongoose.model("User", UserSchema);
