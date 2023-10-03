@@ -284,14 +284,23 @@ async function getAllUsers(req, res) {
 async function filterUsers(req, res) {
 	try {
 		const { gender, ageRange, distance, interests, location } = req.body;
-		console.log("COMPLETE FILTERS ========", req.body)
 		let filters = {};
 		filters.discreetMode = false
+
 		if (ageRange) {
-			filters.$and = [
-				{ 'ageRange.start': { $lte: ageRange.end } },
-				{ 'ageRange.end': { $gte: ageRange.start } }
-			];
+			const today = new Date();
+			const startYear = today.getFullYear() - ageRange.end;
+			const endYear = today.getFullYear() - ageRange.start;
+
+			// Calculate the date of birth range
+			const startDateOfBirth = new Date(startYear, today.getMonth(), today.getDate());
+			const endDateOfBirth = new Date(endYear, today.getMonth(), today.getDate());
+
+			// Add the date of birth filter to the query
+			filters.dateOfBirth = {
+				$gte: startDateOfBirth,
+				$lte: endDateOfBirth,
+			};
 		}
 
 		if (gender) {
