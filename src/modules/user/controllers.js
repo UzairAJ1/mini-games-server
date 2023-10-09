@@ -553,6 +553,7 @@ const usersStats = async (req, res) => {
 		const totalUsers = await User.countDocuments();
 		const maleUsers = await User.countDocuments({ gender: "male" });
 		const femaleUsers = await User.countDocuments({ gender: "female" });
+		
 		const activeUsers = (await User.find()).filter(
 			(user) => user.status === "active"
 		).length;
@@ -618,6 +619,42 @@ const updateUserStatus = async (req, res) => {
 	}
 };
 
+const genderDistribution=async(req,res)=>
+{
+	try {
+		const totalCount = await User.aggregate([
+		  {
+			$group: {
+			  _id: { $toLower: '$gender' }, // Convert gender to lowercase
+			  count: { $sum: 1 },
+			},
+		  },
+		]);
+	
+		const result = {
+		  totalFemales: 0,
+		  totalMales: 0,
+		};
+	
+		totalCount.forEach((item) => {
+		  const gender = item._id;
+		  if (gender === 'female' || gender === 'f') {
+			result.totalFemales += item.count;
+		  } else if (gender === 'male' || gender === 'm') {
+			result.totalMales += item.count;
+		  }
+		});
+	
+		res.json(result);
+	  } catch (err) {
+		console.error(err);
+		res.status(500).json({ error: 'Server error' });
+	  }
+	
+	 
+	};
+
+
 module.exports = {
 	getUser,
 	login,
@@ -633,6 +670,7 @@ module.exports = {
 	filteredUsersByInterests,
 	addGift,
 	usersStats,
-	updateUserStatus
+	updateUserStatus,
+	genderDistribution,
 };
 

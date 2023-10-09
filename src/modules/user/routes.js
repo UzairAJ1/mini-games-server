@@ -14,6 +14,7 @@ const {
 	usersStats,
 	updateUserStatus,
 	addGift,
+	genderDistribution
 } = require("./controllers");
 const path = require("path");
 const multer = require("multer");
@@ -66,5 +67,7 @@ router.post("/addGift", addGift)
 router.get("/usersStats", usersStats);
 
 router.put("/:userId/status", updateUserStatus);
+
+router.get("/genderDistribution",genderDistribution);
 
 module.exports = router;
