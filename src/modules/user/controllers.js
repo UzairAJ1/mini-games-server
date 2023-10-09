@@ -291,16 +291,12 @@ async function filterUsers(req, res) {
 			const today = new Date();
 			const startYear = today.getFullYear() - ageRange.end;
 			const endYear = today.getFullYear() - ageRange.start;
-
-			// Calculate the date of birth range
 			const startDateOfBirth = new Date(startYear, today.getMonth(), today.getDate());
 			const endDateOfBirth = new Date(endYear, today.getMonth(), today.getDate());
-
-			// Add the date of birth filter to the query
 			filters.dateOfBirth = {
 				$gte: startDateOfBirth,
 				$lte: endDateOfBirth,
-			};
+			}
 		}
 
 		if (gender) {
@@ -321,6 +317,7 @@ async function filterUsers(req, res) {
 		// 		}
 		// 	};
 		// }
+
 
 		console.log("FILTERS =======", filters);
 		const filteredUsers = await User.find(filters)
