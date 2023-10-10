@@ -1,50 +1,50 @@
 const { Chats } = require("../../models/Chats");
 
 async function sendMessage(req, res) {
-  try {
-    const newChat = await Chats.create(req.body);
-    const { receiverId } = req.body;
-    const { senderId } = req.body;
+    try {
+        const newChat = await Chats.create(req.body);
+        const { receiverId } = req.body;
+        const { senderId } = req.body;
 
-    res.status(200).json({
-      success: true,
-      message: "Message successfully sent",
-      data: newChat,
-    });
-  } catch (error) {
-    console.log("THE ERROR ===", error);
-    res.status(500).json({
-      status: false,
-      message: "An error occurred while sending message.",
-    });
-  }
+        res.status(200).json({
+            success: true,
+            message: "Message successfully sent",
+            data: newChat,
+        });
+    } catch (error) {
+        console.log("THE ERROR ===", error);
+        res.status(500).json({
+            status: false,
+            message: "An error occurred while sending message.",
+        });
+    }
 }
 
 async function getAllMessages(req, res) {
-  try {
-    const { id1, id2 } = req.body;
+    try {
+        const { id1, id2 } = req.body;
 
-    // Use the $or operator with two conditions
-    const allMessages = await Chats.find({
-      $or: [
-        {
-          receiverId: { $in: [id1, id2] },
-          senderId: { $in: [id1, id2] },
-        },
-      ],
-    });
+        // Use the $or operator with two conditions
+        const allMessages = await Chats.find({
+            $or: [
+                {
+                    receiverId: { $in: [id1, id2] },
+                    senderId: { $in: [id1, id2] },
+                },
+            ],
+        });
 
-    console.log(allMessages);
+        console.log(allMessages);
 
-    // Return allMessages directly, without trying to access .message
-    res.json(allMessages);
-  } catch (error) {
-    console.log("THE ERROR ===", error);
-    res.status(500).json({
-      status: false,
-      message: "An error occurred while sending message.",
-    });
-  }
+        // Return allMessages directly, without trying to access .message
+        res.json(allMessages);
+    } catch (error) {
+        console.log("THE ERROR ===", error);
+        res.status(500).json({
+            status: false,
+            message: "An error occurred while sending message.",
+        });
+    }
 }
 
 // async function deleteLike(req, res) {
@@ -164,11 +164,11 @@ async function getAllMessages(req, res) {
 // }
 
 module.exports = {
-  sendMessage,
-  getAllMessages,
-  //   deleteLike,
-  //   getUserLikes,
-  //   getLikes,
-  //   deleteAllLikes,
-  //   getUserLikesData,
+    sendMessage,
+    getAllMessages,
+    //   deleteLike,
+    //   getUserLikes,
+    //   getLikes,
+    //   deleteAllLikes,
+    //   getUserLikesData,
 };

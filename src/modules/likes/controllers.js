@@ -360,12 +360,171 @@ const likesStats = async (req, res) => {
       },
     ]);
 
+    const likesPerDayMale = await Likes.aggregate([
+      {
+        $lookup: {
+          from: "users",
+          localField: "likerUserId",
+          foreignField: "_id",
+          as: "likerUser",
+        },
+      },
+      {
+        $match: {
+          "likerUser.gender": "male",
+        },
+      },
+      {
+        $addFields: {
+          formattedDate: {
+            $dateToString: {
+              format: "%Y-%m-%d",
+              date: { $toDate: "$createdAt" },
+              timezone: "UTC",
+            },
+          },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            formattedDate: "$formattedDate",
+          },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $sort: { "_id.formattedDate": 1 },
+      },
+    ]);
+
+    // Likes per month for male users
+    const likesPerMonthMale = await Likes.aggregate([
+      {
+        $lookup: {
+          from: "users",
+          localField: "likerUserId",
+          foreignField: "_id",
+          as: "likerUser",
+        },
+      },
+      {
+        $match: {
+          "likerUser.gender": "male",
+        },
+      },
+      {
+        $addFields: {
+          formattedDate: {
+            $dateToString: {
+              format: "%Y-%m",
+              date: { $toDate: "$createdAt" },
+              timezone: "UTC",
+            },
+          },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            formattedDate: "$formattedDate",
+          },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $sort: { "_id.formattedDate": 1 },
+      },
+    ]);
+
+    // Likes per day for female users
+    const likesPerDayFemale = await Likes.aggregate([
+      {
+        $lookup: {
+          from: "users",
+          localField: "likerUserId",
+          foreignField: "_id",
+          as: "likerUser",
+        },
+      },
+      {
+        $match: {
+          "likerUser.gender": "female",
+        },
+      },
+      {
+        $addFields: {
+          formattedDate: {
+            $dateToString: {
+              format: "%Y-%m-%d",
+              date: { $toDate: "$createdAt" },
+              timezone: "UTC",
+            },
+          },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            formattedDate: "$formattedDate",
+          },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $sort: { "_id.formattedDate": 1 },
+      },
+    ]);
+
+    // Likes per month for female users
+    const likesPerMonthFemale = await Likes.aggregate([
+      {
+        $lookup: {
+          from: "users",
+          localField: "likerUserId",
+          foreignField: "_id",
+          as: "likerUser",
+        },
+      },
+      {
+        $match: {
+          "likerUser.gender": "female",
+        },
+      },
+      {
+        $addFields: {
+          formattedDate: {
+            $dateToString: {
+              format: "%Y-%m",
+              date: { $toDate: "$createdAt" },
+              timezone: "UTC",
+            },
+          },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            formattedDate: "$formattedDate",
+          },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $sort: { "_id.formattedDate": 1 },
+      },
+    ]);
+
     const likesStatistics = {
       totalLikes,
       maleLikes,
       femaleLikes,
       likesPerDay,
       likesPerMonth,
+      likesPerDayMale,
+      likesPerMonthMale,
+      likesPerDayFemale,
+      likesPerMonthFemale
     };
 
     res.status(200).json({
