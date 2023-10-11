@@ -6,7 +6,7 @@ let GlobalSettingsSchema = new mongoose.Schema({
     default: 10,
   },
 
-  likeInteractionLimit: {
+  giftInteractionLimit: {
     freeGifts: {
       type: Number,
       default: 50,
@@ -21,6 +21,10 @@ let GlobalSettingsSchema = new mongoose.Schema({
       type: Number,
       default: 24,
     },
+  },
+  likeLimit:{
+    type:Number,
+    default:10
   },
 
   likeTimerLimit: {

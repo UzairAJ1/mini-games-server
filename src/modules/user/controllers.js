@@ -1,4 +1,5 @@
 const { User } = require("../../models/User"); // Make sure to adjust the path accordingly
+const { Likes } = require("../../models/Likes");
 const fs = require("fs");
 const moment = require("moment");
 const jwt = require("jsonwebtoken");
@@ -172,16 +173,30 @@ async function getUser(req, res) {
   try {
     const userId = req.params.id; // Assuming you're passing the user ID as a parameter
     const user = await User.findById(userId);
+    
     if (!user) {
       res.status(404).json({ message: "User not found" });
       return;
     }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set the time to the beginning of the day
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1); // Set the time to the beginning of the next day
+
+    const userLikes = await Likes.find({
+      likerUserId: userId,
+      createdAt: {
+        $gte: today,
+        $lt: tomorrow,
+      }
+    });
+
     let isComplete = false;
     if (
       user?.fullName &&
       user?.dateOfBirth &&
       user?.gender &&
-      // user?.interests?.length > 0 &&
       user?.profileImages?.length > 0 &&
       user?.discreetMode != null &&
       user?.subscriptionType &&
@@ -195,16 +210,21 @@ async function getUser(req, res) {
       console.log("IM HERE COMPLETE ");
       isComplete = true;
     }
+
     res.status(200).json({
-      data: { ...user?._doc, isComplete },
+      data: { ...user?._doc, isComplete, givenLikes: userLikes },
       status: true,
       message: "success",
       status: 200,
     });
   } catch (error) {
+    console.log("ERROR =====", error);
     res.status(500).json({ error: "Failed to get user" });
   }
 }
+
+
+
 
 // Login
 async function login(req, res) {
