@@ -173,7 +173,7 @@ async function getUser(req, res) {
   try {
     const userId = req.params.id; // Assuming you're passing the user ID as a parameter
     const user = await User.findById(userId);
-    
+
     if (!user) {
       res.status(404).json({ message: "User not found" });
       return;
@@ -183,13 +183,13 @@ async function getUser(req, res) {
     today.setHours(0, 0, 0, 0); // Set the time to the beginning of the day
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1); // Set the time to the beginning of the next day
-
-    const userLikes = await Likes.find({
+    console.log("TODAY ========", today);
+    const userLikes = await Likes.countDocuments({
       likerUserId: userId,
       createdAt: {
         $gte: today,
         $lt: tomorrow,
-      }
+      },
     });
 
     let isComplete = false;
@@ -222,9 +222,6 @@ async function getUser(req, res) {
     res.status(500).json({ error: "Failed to get user" });
   }
 }
-
-
-
 
 // Login
 async function login(req, res) {
@@ -537,8 +534,20 @@ async function updateUser(req, res) {
       console.log("IM HERE COMPLETE ");
       isComplete = true;
     }
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set the time to the beginning of the day
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1); // Set the time to the beginning of the next day
+    console.log("TODAY ========", today);
+    const userLikes = await Likes.countDocuments({
+      likerUserId: userId,
+      createdAt: {
+        $gte: today,
+        $lt: tomorrow,
+      },
+    });
     res.status(200).json({
-      data: { ...updatedUser?._doc, isComplete },
+      data: { ...updatedUser?._doc, isComplete, givenLikes: userLikes },
       status: true,
       message: "User updated successfully",
       status: 200,
