@@ -22,14 +22,18 @@ let GlobalSettingsSchema = new mongoose.Schema({
       default: 24,
     },
   },
-  likeLimit:{
-    type:Number,
-    default:10
+  likeLimit: {
+    type: Number,
+    default: 10,
   },
 
   likeTimerLimit: {
     type: Number,
     default: 20,
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
   },
 });
 

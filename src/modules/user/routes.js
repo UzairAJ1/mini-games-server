@@ -15,6 +15,7 @@ const {
   updateUserStatus,
   addGift,
   genderDistribution,
+  filterUserByTime,
 } = require("./controllers");
 const path = require("path");
 const multer = require("multer");
@@ -69,4 +70,6 @@ router.get("/usersStats", usersStats);
 router.put("/:userId/status", updateUserStatus);
 
 router.get("/genderDistribution", genderDistribution);
+
+router.get("/filterUserByTime", filterUserByTime);
 module.exports = router;

@@ -297,6 +297,79 @@ async function getAllUsers(req, res) {
   }
 }
 
+async function filterUserByTime(req, res) {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set the time to the beginning of the day
+
+    const thisWeek = new Date(today); // Start with the current date
+    thisWeek.setDate(thisWeek.getDate() - today.getDay()); // Set the time to the beginning of the week
+
+    const thisMonth = new Date(today); // Start with the current date
+    thisMonth.setDate(1); // Set the time to the beginning of the month
+
+    const thisYear = new Date(today); // Start with the current date
+    thisYear.setMonth(0, 1); // Set the time to the beginning of the year
+
+    // Use the find method to filter users created within the specified time frames.
+    const usersDaily = await User.find({
+      createdAt: {
+        $gte: today,
+      },
+    });
+
+    const usersWeekly = await User.find({
+      createdAt: {
+        $gte: thisWeek,
+      },
+    });
+
+    const usersMonthly = await User.find({
+      createdAt: {
+        $gte: thisMonth,
+      },
+    });
+
+    const usersYearly = await User.find({
+      createdAt: {
+        $gte: thisYear,
+      },
+    });
+
+    const usersTotal = await User.find();
+
+    const countGenders = (users) => {
+      const maleCount = users.filter((user) => user.gender === "male").length;
+      const femaleCount = users.filter(
+        (user) => user.gender === "female"
+      ).length;
+      return { male: maleCount, female: femaleCount };
+    };
+
+    const gendersDaily = countGenders(usersDaily);
+    const gendersWeekly = countGenders(usersWeekly);
+    const gendersMonthly = countGenders(usersMonthly);
+    const gendersYearly = countGenders(usersYearly);
+    const gendersTotal = countGenders(usersTotal);
+
+    res.status(200).json({
+      usersDaily,
+      usersWeekly,
+      usersMonthly,
+      usersYearly,
+      usersTotal,
+      gendersDaily,
+      gendersWeekly,
+      gendersMonthly,
+      gendersYearly,
+      gendersTotal,
+    });
+  } catch (error) {
+    console.log("ERROR =====", error);
+    res.status(500).json({ error: "Failed to get users" });
+  }
+}
+
 async function filterUsers(req, res) {
   try {
     const { gender, ageRange, distance, interests, location } = req.body;
@@ -713,4 +786,5 @@ module.exports = {
   usersStats,
   updateUserStatus,
   genderDistribution,
+  filterUserByTime,
 };

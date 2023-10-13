@@ -9,6 +9,10 @@ const FeatureSchema = new mongoose.Schema({
     type: String,
     required: [true, "Please add description"],
   },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
 const Feature = mongoose.model("Feature", FeatureSchema);

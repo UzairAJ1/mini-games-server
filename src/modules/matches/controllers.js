@@ -524,7 +524,7 @@ const likesStats = async (req, res) => {
       likesPerDayMale,
       likesPerMonthMale,
       likesPerDayFemale,
-      likesPerMonthFemale,
+      likesPerMonthFemale
     };
 
     res.status(200).json({
@@ -540,66 +540,6 @@ const likesStats = async (req, res) => {
     });
   }
 };
-async function filterLikesByTime(req, res) {
-  try {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const thisWeek = new Date(today);
-    thisWeek.setDate(thisWeek.getDate() - today.getDay());
-
-    const thisMonth = new Date(today);
-    thisMonth.setDate(1);
-
-    const thisYear = new Date(today);
-    thisYear.setMonth(0, 1);
-
-    const likesDaily = await Likes.find({
-      createdAt: {
-        $gte: today,
-      },
-    });
-
-    const likesWeekly = await Likes.find({
-      createdAt: {
-        $gte: thisWeek,
-      },
-    })
-      .populate("likerUserId")
-      .populate("likedUserId");
-
-    const likesMonthly = await Likes.find({
-      createdAt: {
-        $gte: thisMonth,
-      },
-    })
-      .populate("likerUserId")
-      .populate("likedUserId");
-
-    const likesYearly = await Likes.find({
-      createdAt: {
-        $gte: thisYear,
-      },
-    })
-      .populate("likerUserId")
-      .populate("likedUserId");
-
-    const likesTotal = await Likes.find()
-      .populate("likerUserId")
-      .populate("likedUserId");
-
-    res.status(200).json({
-      likesDaily,
-      likesWeekly,
-      likesMonthly,
-      likesYearly,
-      likesTotal,
-    });
-  } catch (error) {
-    console.log("ERROR =====", error);
-    res.status(500).json({ error: "Failed to get users" });
-  }
-}
 
 module.exports = {
   addLike,
@@ -610,5 +550,4 @@ module.exports = {
   getUserLikesData,
   likesStats,
   getMatches,
-  filterLikesByTime,
 };
