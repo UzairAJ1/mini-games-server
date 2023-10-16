@@ -184,7 +184,7 @@ async function getUser(req, res) {
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1); // Set the time to the beginning of the next day
     console.log("TODAY ========", today);
-    const userLikes = await Likes.countDocuments({
+    const userLikes = await Likes.find({
       likerUserId: userId,
       createdAt: {
         $gte: today,
@@ -370,6 +370,45 @@ async function filterUserByTime(req, res) {
   }
 }
 
+async function usersByMonths(req, res) {
+  // const monthNames = [
+  //   "January",
+  //   "February",
+  //   "March",
+  //   "April",
+  //   "May",
+  //   "June",
+  //   "July",
+  //   "August",
+  //   "September",
+  //   "October",
+  //   "November",
+  //   "December",
+  // ];
+  try {
+    const usersByMonth = await User.aggregate([
+      {
+        $group: {
+          _id: { $month: "$createdAt" },
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const result = {};
+
+    usersByMonth.forEach((monthData) => {
+      const monthName = moment()
+        .month(monthData._id - 1)
+        .format("MMMM");
+      result[monthName] = monthData.count;
+    });
+
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: "An error occurred" });
+  }
+}
 async function filterUsers(req, res) {
   try {
     const { gender, ageRange, distance, interests, location } = req.body;
@@ -532,6 +571,8 @@ async function updateUser(req, res) {
 
     // Update user properties
     existingUser.fullName = userData.fullName || existingUser.fullName;
+    existingUser.userEngagementMinutes =
+      userData.userEngagementMinutes || existingUser.userEngagementMinutes;
     existingUser.dateOfBirth = userData.dateOfBirth || existingUser.dateOfBirth;
     existingUser.gender = userData.gender || existingUser.gender;
     existingUser.interests = userData.interests
@@ -612,7 +653,7 @@ async function updateUser(req, res) {
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1); // Set the time to the beginning of the next day
     console.log("TODAY ========", today);
-    const userLikes = await Likes.countDocuments({
+    const userLikes = await Likes.find({
       likerUserId: userId,
       createdAt: {
         $gte: today,
@@ -787,4 +828,5 @@ module.exports = {
   updateUserStatus,
   genderDistribution,
   filterUserByTime,
+  usersByMonths,
 };

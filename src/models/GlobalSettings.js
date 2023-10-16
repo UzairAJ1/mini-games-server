@@ -5,7 +5,10 @@ let GlobalSettingsSchema = new mongoose.Schema({
     type: Number,
     default: 10,
   },
-
+  zodiacTimeLimit: {
+    type: Number,
+    default: 1,
+  },
   giftInteractionLimit: {
     freeGifts: {
       type: Number,

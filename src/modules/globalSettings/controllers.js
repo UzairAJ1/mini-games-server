@@ -1,8 +1,15 @@
 const { GlobalSettings } = require("../../models/GlobalSettings");
 
 async function setGlobalSettings(req, res) {
-  const { likeTimerLimit, giftInteractionLimit, zodiacLimit, paidGifts,
-    giftRenewalTime,likeLimit } = req.body;
+  const {
+    likeTimerLimit,
+    giftInteractionLimit,
+    zodiacLimit,
+    paidGifts,
+    giftRenewalTime,
+    likeLimit,
+    zodiacTimeLimit,
+  } = req.body;
   try {
     // Find the existing global settings or create a new one if none exists
     const updatedSettings = await GlobalSettings.findOneAndUpdate(
@@ -13,7 +20,8 @@ async function setGlobalSettings(req, res) {
         zodiacLimit,
         paidGifts,
         giftRenewalTime,
-        likeLimit
+        likeLimit,
+        zodiacTimeLimit,
       },
       {
         upsert: true, // Create if not exists, update if exists

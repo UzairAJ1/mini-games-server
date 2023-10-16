@@ -99,7 +99,7 @@ let UserSchema = new mongoose.Schema({
     long: {
       type: Number,
       default: null,
-    }
+    },
   },
   myGiftsCollection: [GiftSchema],
   status: {
@@ -110,6 +110,10 @@ let UserSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now,
+  },
+  userEngagementMinutes: {
+    type: Number,
+    default: 0,
   },
 });
 
