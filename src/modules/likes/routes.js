@@ -8,7 +8,6 @@ const {
   deleteAllLikes,
   getUserLikesData,
   likesStats,
-  getMatches,
   filterLikesByTime,
 } = require("./controllers");
 
@@ -26,7 +25,6 @@ router.post("/getUserLikesData", getUserLikesData);
 
 router.get("/likesStats", likesStats);
 
-router.get("/getMatches", getMatches);
 
 router.get("/filterLikesByTime", filterLikesByTime);
 

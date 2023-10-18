@@ -1,5 +1,6 @@
 const { default: mongoose } = require("mongoose");
 const { Likes } = require("../../models/Likes"); // Adjust the path accordingly
+const { Matches } = require("../../models/Matches");
 
 async function addLike(req, res) {
   const { likerUserId, likedUserId } = req.body;
@@ -16,11 +17,25 @@ async function addLike(req, res) {
     } else {
       // Create a new like if it doesn't exist
       const newLike = await Likes.create({ likerUserId, likedUserId });
-      res.status(200).json({
-        status: true,
-        message: "User liked successfully.",
-        data: newLike,
-      });
+
+      // Check if the reverse like exists (likedUserId liking likerUserId)
+      const reverseLike = await Likes.findOne({ likerUserId: likedUserId, likedUserId: likerUserId });
+
+      if (reverseLike) {
+        // If reverse like exists, create a match
+        await Matches.create({ matchedUsers: [likerUserId, likedUserId] });
+        res.status(200).json({
+          status: true,
+          message: "User liked successfully and a match is created.",
+          data: newLike,
+        });
+      } else {
+        res.status(200).json({
+          status: true,
+          message: "User liked successfully. No match created yet.",
+          data: newLike,
+        });
+      }
     }
   } catch (error) {
     res.status(500).json({
@@ -30,6 +45,7 @@ async function addLike(req, res) {
     });
   }
 }
+
 
 async function deleteLike(req, res) {
   const deleteid = req.params.deleteid; // Assuming you're passing deleteid as a URL parameter
@@ -147,126 +163,7 @@ async function getUserLikesData(req, res) {
   }
 }
 
-async function getMatches(req, res) {
-  const { userId } = req.query;
-  try {
-    const matches = await Likes.aggregate([
-      {
-        $match: {
-          $or: [
-            { likerUserId: mongoose.Types.ObjectId(userId) },
-            { likedUserId: mongoose.Types.ObjectId(userId) },
-          ],
-        },
-      },
-      {
-        $lookup: {
-          from: "likes",
-          let: { likedUserId: "$likedUserId", likerUserId: "$likerUserId" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$likedUserId", "$$likerUserId"] },
-                    { $eq: ["$likerUserId", "$$likedUserId"] },
-                  ],
-                },
-              },
-            },
-          ],
-          as: "match",
-        },
-      },
-      {
-        $unwind: "$match",
-      },
-      {
-        $lookup: {
-          from: "users",
-          localField: "likerUserId",
-          foreignField: "_id",
-          as: "likerUser",
-        },
-      },
-      {
-        $unwind: "$likerUser",
-      },
-      {
-        $lookup: {
-          from: "users",
-          localField: "likedUserId",
-          foreignField: "_id",
-          as: "likedUser",
-        },
-      },
-      {
-        $unwind: "$likedUser",
-      },
-      {
-        $project: {
-          likerUserId: 1,
-          likedUserId: 1,
-        },
-      },
-      {
-        $group: {
-          _id: {
-            $cond: {
-              if: { $gte: ["$likerUserId", "$likedUserId"] },
-              then: "$likerUserId",
-              else: "$likedUserId",
-            },
-          },
-          likerUserId: { $first: "$likerUserId" },
-          likedUserId: { $first: "$likedUserId" },
-        },
-      },
-      {
-        $project: {
-          _id: 0,
-          likerUserId: 1,
-          likedUserId: 1,
-        },
-      },
-      {
-        $lookup: {
-          from: "users",
-          localField: "likerUserId",
-          foreignField: "_id",
-          as: "likerUserDetails",
-        },
-      },
-      {
-        $unwind: "$likerUserDetails",
-      },
-      {
-        $lookup: {
-          from: "users",
-          localField: "likedUserId",
-          foreignField: "_id",
-          as: "likedUserDetails",
-        },
-      },
-      {
-        $unwind: "$likedUserDetails",
-      },
-      {
-        $project: {
-          likerUserId: 1,
-          likedUserId: 1,
-          likerUserDetails: 1, // Include likerUser details
-          likedUserDetails: 1, // Include likedUser details
-        },
-      },
-    ]);
 
-    res.json(matches);
-  } catch (error) {
-    console.error("Error getting matches:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-}
 
 const likesStats = async (req, res) => {
   try {
@@ -609,6 +506,5 @@ module.exports = {
   deleteAllLikes,
   getUserLikesData,
   likesStats,
-  getMatches,
   filterLikesByTime,
 };

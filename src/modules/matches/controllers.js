@@ -1,553 +1,123 @@
-const { default: mongoose } = require("mongoose");
-const { Likes } = require("../../models/Likes"); // Adjust the path accordingly
+const { Matches } = require("../../models/Matches"); // Import your Matches model
 
-async function addLike(req, res) {
-  const { likerUserId, likedUserId } = req.body;
+async function createMatch(req, res) {
   try {
-    // Check if a like already exists for the same pair of users
-    const existingLike = await Likes.findOne({ likerUserId, likedUserId });
+    const { matchedUsers } = req.body;
+    const newMatch = await Matches.create({ matchedUsers });
+    res.status(201).json({
+      status: true,
+      message: "Match created successfully.",
+      data: newMatch,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: "An error occurred while creating the match.",
+      data: null,
+    });
+  }
+}
 
-    if (existingLike) {
-      res.status(400).json({
+async function getAllMatches(req, res) {
+  try {
+    const matches = await Matches.find();
+    res.status(200).json({
+      status: true,
+      message: "Matches retrieved successfully.",
+      data: matches,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: "An error occurred while retrieving matches.",
+      data: null,
+    });
+  }
+}
+
+async function getMatchById(req, res) {
+  const { id } = req.params;
+  try {
+    const match = await Matches.findById(id);
+    if (!match) {
+      res.status(404).json({
         status: false,
-        message: "User has already liked this user.",
+        message: "Match not found.",
         data: null,
       });
     } else {
-      // Create a new like if it doesn't exist
-      const newLike = await Likes.create({ likerUserId, likedUserId });
       res.status(200).json({
         status: true,
-        message: "User liked successfully.",
-        data: newLike,
+        message: "Match retrieved successfully.",
+        data: match,
       });
     }
   } catch (error) {
     res.status(500).json({
       status: false,
-      message: "An error occurred while liking the user.",
+      message: "An error occurred while retrieving the match.",
       data: null,
     });
   }
 }
 
-async function deleteLike(req, res) {
-  const deleteid = req.params.deleteid; // Assuming you're passing deleteid as a URL parameter
+async function updateMatchById(req, res) {
+  const { id } = req.params;
+  const { matchedUsers } = req.body;
   try {
-    await Likes.findByIdAndDelete(deleteid);
-    res.status(200).json({
-      status: true,
-      message: "Like deleted successfully.",
-      data: null,
-    });
-  } catch (error) {
-    res.status(500).json({
-      status: false,
-      message: "An error occurred while deleting the like.",
-      data: null,
-    });
-  }
-}
-
-async function deleteAllLikes(req, res) {
-  try {
-    await Likes.deleteMany();
-    res.status(200).json({
-      status: true,
-      message: "Likes deleted successfully.",
-      data: null,
-    });
-  } catch (error) {
-    res.status(500).json({
-      status: false,
-      message: "An error occurred while deleting the like.",
-      data: null,
-    });
-  }
-}
-
-async function getUserLikes(req, res) {
-  const { userId, type } = req.body;
-  try {
-    let likedUsers;
-    if (type === "given") {
-      likedUsers = await Likes.find({ likerUserId: userId });
-    } else if (type === "received") {
-      likedUsers = await Likes.find({ likedUserId: userId });
-    } else {
-      return res.status(400).json({
+    const updatedMatch = await Matches.findByIdAndUpdate(id, { matchedUsers }, { new: true });
+    if (!updatedMatch) {
+      res.status(404).json({
         status: false,
-        message: "Invalid type specified.",
+        message: "Match not found.",
         data: null,
       });
-    }
-    res.status(200).json({
-      status: true,
-      message: "Liked users retrieved successfully.",
-      data: likedUsers,
-      likeCount: likedUsers?.length,
-    });
-  } catch (error) {
-    res.status(500).json({
-      status: false,
-      message: "An error occurred while retrieving liked users.",
-      data: null,
-    });
-  }
-}
-
-async function getLikes(req, res) {
-  try {
-    let likes = await Likes.find();
-    res.status(200).json({
-      status: true,
-      message: "Liked users retrieved successfully.",
-      data: likes,
-    });
-  } catch (error) {
-    res.status(500).json({
-      status: false,
-      message: "An error occurred while retrieving liked users.",
-      data: null,
-    });
-  }
-}
-
-async function getUserLikesData(req, res) {
-  const { userId, type } = req.body;
-  try {
-    let likedUsers;
-    if (type === "given") {
-      likedUsers = await Likes.find({ likerUserId: userId })
-        .populate("likerUserId")
-        .populate("likedUserId");
-    } else if (type === "received") {
-      likedUsers = await Likes.find({ likedUserId: userId })
-        .populate("likedUserId")
-        .populate("likerUserId");
     } else {
-      return res.status(400).json({
-        status: false,
-        message: "Invalid type specified.",
-        data: null,
+      res.status(200).json({
+        status: true,
+        message: "Match updated successfully.",
+        data: updatedMatch,
       });
     }
-    res.status(200).json({
-      status: true,
-      message: "Liked users retrieved successfully.",
-      data: likedUsers,
-      likeCount: likedUsers?.length,
-    });
   } catch (error) {
     res.status(500).json({
       status: false,
-      message: "An error occurred while retrieving liked users.",
+      message: "An error occurred while updating the match.",
       data: null,
     });
   }
 }
 
-async function getMatches(req, res) {
-  const { userId } = req.query;
+async function deleteMatchById(req, res) {
+  const { id } = req.params;
   try {
-    const matches = await Likes.aggregate([
-      {
-        $match: {
-          $or: [
-            { likerUserId: mongoose.Types.ObjectId(userId) },
-            { likedUserId: mongoose.Types.ObjectId(userId) },
-          ],
-        },
-      },
-      {
-        $lookup: {
-          from: "likes",
-          let: { likedUserId: "$likedUserId", likerUserId: "$likerUserId" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$likedUserId", "$$likerUserId"] },
-                    { $eq: ["$likerUserId", "$$likedUserId"] },
-                  ],
-                },
-              },
-            },
-          ],
-          as: "match",
-        },
-      },
-      {
-        $unwind: "$match",
-      },
-      {
-        $lookup: {
-          from: "users",
-          localField: "likerUserId",
-          foreignField: "_id",
-          as: "likerUser",
-        },
-      },
-      {
-        $unwind: "$likerUser",
-      },
-      {
-        $lookup: {
-          from: "users",
-          localField: "likedUserId",
-          foreignField: "_id",
-          as: "likedUser",
-        },
-      },
-      {
-        $unwind: "$likedUser",
-      },
-      {
-        $project: {
-          likerUserId: 1,
-          likedUserId: 1,
-        },
-      },
-      {
-        $group: {
-          _id: {
-            $cond: {
-              if: { $gte: ["$likerUserId", "$likedUserId"] },
-              then: "$likerUserId",
-              else: "$likedUserId",
-            },
-          },
-          likerUserId: { $first: "$likerUserId" },
-          likedUserId: { $first: "$likedUserId" },
-        },
-      },
-      {
-        $project: {
-          _id: 0,
-          likerUserId: 1,
-          likedUserId: 1,
-        },
-      },
-      {
-        $lookup: {
-          from: "users",
-          localField: "likerUserId",
-          foreignField: "_id",
-          as: "likerUserDetails",
-        },
-      },
-      {
-        $unwind: "$likerUserDetails",
-      },
-      {
-        $lookup: {
-          from: "users",
-          localField: "likedUserId",
-          foreignField: "_id",
-          as: "likedUserDetails",
-        },
-      },
-      {
-        $unwind: "$likedUserDetails",
-      },
-      {
-        $project: {
-          likerUserId: 1,
-          likedUserId: 1,
-          likerUserDetails: 1, // Include likerUser details
-          likedUserDetails: 1, // Include likedUser details
-        },
-      },
-    ]);
-
-    res.json(matches);
-  } catch (error) {
-    console.error("Error getting matches:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-}
-
-const likesStats = async (req, res) => {
-  try {
-    const totalLikes = await Likes.countDocuments();
-
-    //Likes by male
-    const maleLikes = await Likes.aggregate([
-      {
-        $lookup: {
-          from: "users",
-          localField: "likerUserId",
-          foreignField: "_id",
-          as: "likerUser",
-        },
-      },
-      {
-        $match: {
-          "likerUser.gender": "male",
-        },
-      },
-      {
-        $count: "maleLikes",
-      },
-    ]);
-
-    //Likes by female
-    const femaleLikes = await Likes.aggregate([
-      {
-        $lookup: {
-          from: "users",
-          localField: "likerUserId",
-          foreignField: "_id",
-          as: "likerUser",
-        },
-      },
-      {
-        $match: {
-          "likerUser.gender": "female",
-        },
-      },
-      {
-        $count: "femaleLikes",
-      },
-    ]);
-
-    //Likes per day
-    const likesPerDay = await Likes.aggregate([
-      {
-        $addFields: {
-          formattedDate: {
-            $dateToString: {
-              format: "%Y-%m-%d",
-              date: { $toDate: "$createdAt" },
-              timezone: "UTC",
-            },
-          },
-        },
-      },
-      {
-        $group: {
-          _id: "$formattedDate",
-          count: { $sum: 1 },
-        },
-      },
-      {
-        $sort: { _id: 1 },
-      },
-    ]);
-
-    //Likes per month
-    const likesPerMonth = await Likes.aggregate([
-      {
-        $addFields: {
-          formattedDate: {
-            $dateToString: {
-              format: "%Y-%m",
-              date: { $toDate: "$createdAt" },
-              timezone: "UTC",
-            },
-          },
-        },
-      },
-      {
-        $group: {
-          _id: "$formattedDate",
-          count: { $sum: 1 },
-        },
-      },
-      {
-        $sort: { _id: 1 },
-      },
-    ]);
-
-    const likesPerDayMale = await Likes.aggregate([
-      {
-        $lookup: {
-          from: "users",
-          localField: "likerUserId",
-          foreignField: "_id",
-          as: "likerUser",
-        },
-      },
-      {
-        $match: {
-          "likerUser.gender": "male",
-        },
-      },
-      {
-        $addFields: {
-          formattedDate: {
-            $dateToString: {
-              format: "%Y-%m-%d",
-              date: { $toDate: "$createdAt" },
-              timezone: "UTC",
-            },
-          },
-        },
-      },
-      {
-        $group: {
-          _id: {
-            formattedDate: "$formattedDate",
-          },
-          count: { $sum: 1 },
-        },
-      },
-      {
-        $sort: { "_id.formattedDate": 1 },
-      },
-    ]);
-
-    // Likes per month for male users
-    const likesPerMonthMale = await Likes.aggregate([
-      {
-        $lookup: {
-          from: "users",
-          localField: "likerUserId",
-          foreignField: "_id",
-          as: "likerUser",
-        },
-      },
-      {
-        $match: {
-          "likerUser.gender": "male",
-        },
-      },
-      {
-        $addFields: {
-          formattedDate: {
-            $dateToString: {
-              format: "%Y-%m",
-              date: { $toDate: "$createdAt" },
-              timezone: "UTC",
-            },
-          },
-        },
-      },
-      {
-        $group: {
-          _id: {
-            formattedDate: "$formattedDate",
-          },
-          count: { $sum: 1 },
-        },
-      },
-      {
-        $sort: { "_id.formattedDate": 1 },
-      },
-    ]);
-
-    // Likes per day for female users
-    const likesPerDayFemale = await Likes.aggregate([
-      {
-        $lookup: {
-          from: "users",
-          localField: "likerUserId",
-          foreignField: "_id",
-          as: "likerUser",
-        },
-      },
-      {
-        $match: {
-          "likerUser.gender": "female",
-        },
-      },
-      {
-        $addFields: {
-          formattedDate: {
-            $dateToString: {
-              format: "%Y-%m-%d",
-              date: { $toDate: "$createdAt" },
-              timezone: "UTC",
-            },
-          },
-        },
-      },
-      {
-        $group: {
-          _id: {
-            formattedDate: "$formattedDate",
-          },
-          count: { $sum: 1 },
-        },
-      },
-      {
-        $sort: { "_id.formattedDate": 1 },
-      },
-    ]);
-
-    // Likes per month for female users
-    const likesPerMonthFemale = await Likes.aggregate([
-      {
-        $lookup: {
-          from: "users",
-          localField: "likerUserId",
-          foreignField: "_id",
-          as: "likerUser",
-        },
-      },
-      {
-        $match: {
-          "likerUser.gender": "female",
-        },
-      },
-      {
-        $addFields: {
-          formattedDate: {
-            $dateToString: {
-              format: "%Y-%m",
-              date: { $toDate: "$createdAt" },
-              timezone: "UTC",
-            },
-          },
-        },
-      },
-      {
-        $group: {
-          _id: {
-            formattedDate: "$formattedDate",
-          },
-          count: { $sum: 1 },
-        },
-      },
-      {
-        $sort: { "_id.formattedDate": 1 },
-      },
-    ]);
-
-    const likesStatistics = {
-      totalLikes,
-      maleLikes,
-      femaleLikes,
-      likesPerDay,
-      likesPerMonth,
-      likesPerDayMale,
-      likesPerMonthMale,
-      likesPerDayFemale,
-      likesPerMonthFemale
-    };
-
-    res.status(200).json({
-      data: likesStatistics,
-      status: true,
-      message: "Likes Statistics",
-    });
+    const deletedMatch = await Matches.findByIdAndDelete(id);
+    if (!deletedMatch) {
+      res.status(404).json({
+        status: false,
+        message: "Match not found.",
+        data: null,
+      });
+    } else {
+      res.status(200).json({
+        status: true,
+        message: "Match deleted successfully.",
+        data: deletedMatch,
+      });
+    }
   } catch (error) {
     res.status(500).json({
       status: false,
-      message: "An error occurred while retrieving likes statistics.",
+      message: "An error occurred while deleting the match.",
       data: null,
     });
   }
-};
+}
 
 module.exports = {
-  addLike,
-  deleteLike,
-  getUserLikes,
-  getLikes,
-  deleteAllLikes,
-  getUserLikesData,
-  likesStats,
-  getMatches,
+  createMatch,
+  getAllMatches,
+  getMatchById,
+  updateMatchById,
+  deleteMatchById
 };
