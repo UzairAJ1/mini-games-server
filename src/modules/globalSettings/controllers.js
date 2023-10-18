@@ -1,15 +1,27 @@
 const { GlobalSettings } = require("../../models/GlobalSettings");
 
 async function setGlobalSettings(req, res) {
-  const { likeTimerLimit, likeInteractionLimit, zodiacLimit } = req.body;
+  const {
+    likeTimerLimit,
+    giftInteractionLimit,
+    zodiacLimit,
+    paidGifts,
+    giftRenewalTime,
+    likeLimit,
+    zodiacTimeLimit,
+  } = req.body;
   try {
     // Find the existing global settings or create a new one if none exists
     const updatedSettings = await GlobalSettings.findOneAndUpdate(
       {},
       {
         likeTimerLimit,
-        likeInteractionLimit,
+        giftInteractionLimit,
         zodiacLimit,
+        paidGifts,
+        giftRenewalTime,
+        likeLimit,
+        zodiacTimeLimit,
       },
       {
         upsert: true, // Create if not exists, update if exists
@@ -23,6 +35,7 @@ async function setGlobalSettings(req, res) {
       data: updatedSettings,
     });
   } catch (error) {
+    console.log("ERROR =====", error);
     res.status(500).json({
       status: false,
       message: "An error occurred while updating global settings.",

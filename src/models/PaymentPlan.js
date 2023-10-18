@@ -45,6 +45,10 @@ let PaymentPlanSchema = new mongoose.Schema({
     type: String,
     required: [true, "Please add transaction id"],
   },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
 const PaymentPlan = mongoose.model("PaymentPlan", PaymentPlanSchema);
