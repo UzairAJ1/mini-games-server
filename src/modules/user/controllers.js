@@ -734,6 +734,89 @@ const usersStats = async (req, res) => {
   }
 };
 
+const activeUsersStats = async (req, res) => {
+  try {
+    // Daily Active Users
+    const activeUsersPerDay = await User.aggregate([
+      {
+        $match: {
+          status: "active",
+        },
+      },
+      {
+        $addFields: {
+          formattedDate: {
+            $dateToString: {
+              format: "%Y-%m-%d",
+              date: { $toDate: "$createdAt" },
+              timezone: "UTC",
+            },
+          },
+        },
+      },
+      {
+        $group: {
+          _id: "$formattedDate",
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $sort: { _id: 1 },
+      },
+    ]);
+
+    // Monthly Active Users
+    const activeUsersPerMonth = await User.aggregate([
+      {
+        $match: {
+          status: "active",
+        },
+      },
+      {
+        $addFields: {
+          formattedDate: {
+            $dateToString: {
+              format: "%Y-%m",
+              date: { $toDate: "$createdAt" },
+              timezone: "UTC",
+            },
+          },
+        },
+      },
+      {
+        $group: {
+          _id: "$formattedDate",
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $sort: { _id: 1 },
+      },
+    ]);
+
+    // Total Active Users
+    const totalActiveUsers = await User.countDocuments({ status: "active" });
+
+    const activeUsersStatistics = {
+      totalActiveUsers,
+      activeUsersPerDay,
+      activeUsersPerMonth,
+    };
+
+    res.status(200).json({
+      data: activeUsersStatistics,
+      status: true,
+      message: "Active Users Statistics",
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: "An error occurred while retrieving active users statistics.",
+      data: null,
+    });
+  }
+};
+
 const updateUserStatus = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -822,4 +905,5 @@ module.exports = {
   genderDistribution,
   filterUserByTime,
   usersByMonths,
+  activeUsersStats,
 };

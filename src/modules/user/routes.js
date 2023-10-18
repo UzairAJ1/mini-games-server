@@ -17,6 +17,7 @@ const {
   genderDistribution,
   filterUserByTime,
   usersByMonths,
+  activeUsersStats,
 } = require("./controllers");
 const path = require("path");
 const multer = require("multer");
@@ -75,4 +76,6 @@ router.get("/genderDistribution", genderDistribution);
 router.get("/filterUserByTime", filterUserByTime);
 
 router.get("/usersByMonths", usersByMonths);
+
+router.get("/activeUsersStats", activeUsersStats);
 module.exports = router;
