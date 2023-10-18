@@ -78,4 +78,5 @@ router.get("/filterUserByTime", filterUserByTime);
 router.get("/usersByMonths", usersByMonths);
 
 router.get("/activeUsersStats", activeUsersStats);
+
 module.exports = router;
