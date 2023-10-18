@@ -371,20 +371,6 @@ async function filterUserByTime(req, res) {
 }
 
 async function usersByMonths(req, res) {
-  // const monthNames = [
-  //   "January",
-  //   "February",
-  //   "March",
-  //   "April",
-  //   "May",
-  //   "June",
-  //   "July",
-  //   "August",
-  //   "September",
-  //   "October",
-  //   "November",
-  //   "December",
-  // ];
   try {
     const usersByMonth = await User.aggregate([
       {
@@ -398,10 +384,16 @@ async function usersByMonths(req, res) {
     const result = {};
 
     usersByMonth.forEach((monthData) => {
-      const monthName = moment()
-        .month(monthData._id - 1)
-        .format("MMMM");
-      result[monthName] = monthData.count;
+      const monthNumber = monthData._id;
+
+      if (monthNumber >= 1 && monthNumber <= 12) {
+        // Check if the month number is valid (between 1 and 12)
+        const year = moment().year(); // Get the current year
+        const formattedDate = moment([year, monthNumber - 1, 1]).format(
+          "MM/DD/YYYY"
+        );
+        result[formattedDate] = monthData.count.toString();
+      }
     });
 
     res.json(result);
@@ -409,6 +401,7 @@ async function usersByMonths(req, res) {
     res.status(500).json({ error: "An error occurred" });
   }
 }
+
 async function filterUsers(req, res) {
   try {
     const { gender, ageRange, distance, interests, location } = req.body;
