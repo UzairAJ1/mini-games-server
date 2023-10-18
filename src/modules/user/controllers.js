@@ -856,6 +856,7 @@ const updateUserStatus = async (req, res) => {
 
 const genderDistribution = async (req, res) => {
   try {
+    // Total Gender Distribution
     const totalCount = await User.aggregate([
       {
         $group: {
@@ -879,10 +880,108 @@ const genderDistribution = async (req, res) => {
       }
     });
 
-    res.json(result);
+    // Daily Gender Distribution
+    const dailyGenderDistribution = await User.aggregate([
+      {
+        $match: {
+          status: "active",
+        },
+      },
+      {
+        $addFields: {
+          formattedDate: {
+            $dateToString: {
+              format: "%Y-%m-%d",
+              date: { $toDate: "$createdAt" },
+              timezone: "UTC",
+            },
+          },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            gender: { $toLower: "$gender" }, // Convert gender to lowercase
+            formattedDate: "$formattedDate",
+          },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $sort: { "_id.formattedDate": 1 },
+      },
+    ]);
+
+    // Monthly Gender Distribution
+    const monthlyGenderDistribution = await User.aggregate([
+      {
+        $match: {
+          status: "active",
+        },
+      },
+      {
+        $addFields: {
+          formattedDate: {
+            $dateToString: {
+              format: "%Y-%m",
+              date: { $toDate: "$createdAt" },
+              timezone: "UTC",
+            },
+          },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            gender: { $toLower: "$gender" }, // Convert gender to lowercase
+            formattedDate: "$formattedDate",
+          },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $sort: { "_id.formattedDate": 1 },
+      },
+    ]);
+
+    // Calculate total daily active males and females
+    const totalDailyActive = dailyGenderDistribution.reduce(
+      (acc, item) => {
+        if (item._id.gender === "female") {
+          acc.females += item.count;
+        } else if (item._id.gender === "male") {
+          acc.males += item.count;
+        }
+        return acc;
+      },
+      { males: 0, females: 0 }
+    );
+
+    // Calculate total monthly active males and females
+    const totalMonthlyActive = monthlyGenderDistribution.reduce(
+      (acc, item) => {
+        if (item._id.gender === "female") {
+          acc.females += item.count;
+        } else if (item._id.gender === "male") {
+          acc.males += item.count;
+        }
+        return acc;
+      },
+      { males: 0, females: 0 }
+    );
+
+    const genderStatistics = {
+      total: result,
+      daily: dailyGenderDistribution,
+      monthly: monthlyGenderDistribution,
+      totalDailyActive,
+      totalMonthlyActive,
+    };
+
+    res.json(genderStatistics);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Server error recieved" });
+    res.status(500).json({ error: "Server error received" });
   }
 };
 
