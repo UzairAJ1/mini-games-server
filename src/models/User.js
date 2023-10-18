@@ -115,6 +115,14 @@ let UserSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  remainingLikes: {
+    type: Number,
+    default: 0,
+  },
+  likesTimeoutDate: {
+    type: Date,
+    default: null,
+  },
 });
 
 const User = mongoose.model("User", UserSchema);

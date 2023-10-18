@@ -1,41 +1,140 @@
 const { default: mongoose } = require("mongoose");
 const { Likes } = require("../../models/Likes"); // Adjust the path accordingly
 const { Matches } = require("../../models/Matches");
+const { GlobalSettings } = require("../../models/GlobalSettings");
+const { User } = require("../../models/User");
+
+// async function addLike(req, res) {
+//   const { likerUserId, likedUserId } = req.body;
+//   try {
+
+//     // Check if a like already exists for the same pair of users
+//     const existingLike = await Likes.findOne({ likerUserId, likedUserId });
+
+//     if (existingLike) {
+//       res.status(400).json({
+//         status: false,
+//         message: "User has already liked this user.",
+//         data: null,
+//       });
+//     } else {
+//       const globalSettings = await GlobalSettings.findOne()
+//       const { likeLimit, likeTimerLimit } = globalSettings
+//       // Create a new like if it doesn't exist
+//       const newLike = await Likes.create({ likerUserId, likedUserId });
+
+//       const user = await User.findById(likerUserId);
+
+//       if (user.remainingLikes > 1) {
+//         // If remainingLikes is more than 1, decrement it by 1
+//         user.remainingLikes -= 1;
+//       } else if (user.remainingLikes == 1) {
+//         // If remainingLikes is 1, decrement it by 1 and update likesTimeoutDate
+//         user.remainingLikes -= 1;
+//         user.likesTimeoutDate = new Date(Date.now() + likeTimerLimit * 60000);
+//       }
+
+//       const updatedUser = await user.save();
+
+//       // Check if the reverse like exists (likedUserId liking likerUserId)
+//       const reverseLike = await Likes.findOne({ likerUserId: likedUserId, likedUserId: likerUserId });
+
+//       if (reverseLike) {
+//         // If reverse like exists, create a match
+//         await Matches.create({ matchedUsers: [likerUserId, likedUserId] });
+//         res.status(200).json({
+//           status: true,
+//           message: "User liked successfully and a match is created.",
+//           data: newLike,
+//         });
+//       } else {
+//         res.status(200).json({
+//           status: true,
+//           message: "User liked successfully. No match created yet.",
+//           data: newLike,
+//         });
+//       }
+//     }
+//   } catch (error) {
+//     res.status(500).json({
+//       status: false,
+//       message: "An error occurred while liking the user.",
+//       data: null,
+//     });
+//   }
+// }
 
 async function addLike(req, res) {
   const { likerUserId, likedUserId } = req.body;
   try {
+    const user = await User.findById(likerUserId);
+    const globalSettings = await GlobalSettings.findOne();
+    const { likeLimit, likeTimerLimit } = globalSettings;
+
+    if (user.remainingLikes === 0) {
+      // If remainingLikes is 0, check if likesTimeoutDate has passed
+      if (user.likesTimeoutDate && user.likesTimeoutDate > new Date()) {
+        // If likesTimeoutDate has not passed, show a message and return
+        return res.status(400).json({
+          status: false,
+          message: "Please wait until the timeout is finished.",
+          data: null,
+          remainingLikes: user.remainingLikes,
+          likesTimeoutDate: user.likesTimeoutDate
+        });
+      } else {
+        // If likesTimeoutDate has passed, reset remainingLikes and likesTimeoutDate
+        user.remainingLikes = likeLimit;
+        user.likesTimeoutDate = null;
+      }
+    }
+
     // Check if a like already exists for the same pair of users
     const existingLike = await Likes.findOne({ likerUserId, likedUserId });
 
     if (existingLike) {
-      res.status(400).json({
+      return res.status(400).json({
         status: false,
         message: "User has already liked this user.",
         data: null,
       });
+    }
+
+    // Create a new like if it doesn't exist
+    const newLike = await Likes.create({ likerUserId, likedUserId });
+
+    if (user.remainingLikes > 1) {
+      // If remainingLikes is more than 1, decrement it by 1
+      user.remainingLikes -= 1;
+    } else if (user.remainingLikes === 1) {
+      // If remainingLikes is 1, decrement it by 1 and update likesTimeoutDate
+      user.remainingLikes -= 1;
+      user.likesTimeoutDate = new Date(Date.now() + likeTimerLimit * 60000);
+    }
+
+    const updatedUser = await user.save();
+
+    // Check if the reverse like exists (likedUserId liking likerUserId)
+    const reverseLike = await Likes.findOne({ likerUserId: likedUserId, likedUserId: likerUserId });
+
+    if (reverseLike) {
+      // If reverse like exists, create a match
+      await Matches.create({ matchedUsers: [likerUserId, likedUserId] });
+      res.status(200).json({
+        status: true,
+        message: "User liked successfully and a match is created.",
+        data: newLike,
+        remainingLikes: updatedUser.remainingLikes,
+        likesTimeoutDate: updatedUser.likesTimeoutDate
+      });
     } else {
-      // Create a new like if it doesn't exist
-      const newLike = await Likes.create({ likerUserId, likedUserId });
-
-      // Check if the reverse like exists (likedUserId liking likerUserId)
-      const reverseLike = await Likes.findOne({ likerUserId: likedUserId, likedUserId: likerUserId });
-
-      if (reverseLike) {
-        // If reverse like exists, create a match
-        await Matches.create({ matchedUsers: [likerUserId, likedUserId] });
-        res.status(200).json({
-          status: true,
-          message: "User liked successfully and a match is created.",
-          data: newLike,
-        });
-      } else {
-        res.status(200).json({
-          status: true,
-          message: "User liked successfully. No match created yet.",
-          data: newLike,
-        });
-      }
+      res.status(200).json({
+        status: true,
+        message: "User liked successfully. No match created yet.",
+        data: newLike,
+        remainingLikes: updatedUser.remainingLikes,
+        likesTimeoutDate: updatedUser.likesTimeoutDate
+      });
     }
   } catch (error) {
     res.status(500).json({
