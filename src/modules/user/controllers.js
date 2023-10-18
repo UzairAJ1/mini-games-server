@@ -236,7 +236,11 @@ async function login(req, res) {
     const user = await User.findOne({ email: email });
 
     console.log({ email });
-
+    console.log("user:", user);
+    if (user.status !== "active") {
+      res.status(404).json({ message: "This User is Banned" });
+      return;
+    }
     if (!user) {
       res.status(404).json({ message: "User not found" });
       return;
