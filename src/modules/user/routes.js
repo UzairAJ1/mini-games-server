@@ -18,6 +18,7 @@ const {
   filterUserByTime,
   usersByMonths,
   activeUsersStats,
+  zodiacSpin,
 } = require("./controllers");
 const path = require("path");
 const multer = require("multer");
@@ -78,5 +79,7 @@ router.get("/filterUserByTime", filterUserByTime);
 router.get("/usersByMonths", usersByMonths);
 
 router.get("/activeUsersStats", activeUsersStats);
+
+router.post("/zodiacSpin", zodiacSpin)
 
 module.exports = router;

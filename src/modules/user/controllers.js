@@ -3,6 +3,7 @@ const { Likes } = require("../../models/Likes");
 const fs = require("fs");
 const moment = require("moment");
 const jwt = require("jsonwebtoken");
+const { GlobalSettings } = require("../../models/GlobalSettings");
 
 // Add user
 async function addUser(req, res) {
@@ -210,6 +211,7 @@ async function getUser(req, res) {
 			console.log("IM HERE COMPLETE ");
 			isComplete = true;
 		}
+
 
 		res.status(200).json({
 			data: { ...user?._doc, isComplete, givenLikes: userLikes },
@@ -990,7 +992,109 @@ const genderDistribution = async (req, res) => {
 	}
 };
 
+async function zodiacSpin(req, res) {
+	const { userId, spinnedUsers } = req.body;
+	try {
+		const user = await User.findById(userId);
+		const globalSettings = await GlobalSettings.findOne();
+		const { zodiacLimit, zodiacTimeLimit } = globalSettings;
+
+		if (user.remainingSpins === 0) {
+			if (user.spinsTimeoutDate && user.spinsTimeoutDate > new Date()) {
+				console.log("WAITING ")
+				return res.status(400).json({
+					status: false,
+					message: "Please wait until the timeout is finished.",
+					data: null,
+					remainingSpins: user.remainingSpins,
+					spinsTimeoutDate: user.spinsTimeoutDate
+				});
+			} else {
+				user.remainingSpins = zodiacLimit;
+				user.spinsTimeoutDate = zodiacTimeLimit;
+			}
+		}
+		function arraysAreEqual(arr1, arr2) {
+			return JSON.stringify(arr1) === JSON.stringify(arr2);
+		}
+
+
+		if (user.remainingSpins > 1) {
+			// if (!arraysAreEqual(user.spinnedUsers, spinnedUsers)) {
+			// 	return res.status(400).json({
+			// 		status: false,
+			// 		message: "Spinned users not same as last spin",
+			// 		data: null,
+			// 	});
+			// }
+			console.log("HERE =====")
+			user.remainingSpins -= 1;
+			user.spinnedUsers = spinnedUsers
+
+		} else if (user.remainingSpins === 1) {
+			// if (!arraysAreEqual(user.spinnedUsers, spinnedUsers)) {
+			// 	return res.status(400).json({
+			// 		status: false,
+			// 		message: "Spinned users not same as last spin",
+			// 		data: null,
+			// 	});
+			// }
+			console.log("HERE 222====")
+			user.remainingSpins -= 1;
+			user.spinsTimeoutDate = new Date(Date.now() + zodiacTimeLimit * 60000);
+			user.spinnedUsers = []
+		}
+
+		const updatedUser = await user.save();
+
+		let isComplete = false;
+		if (
+			updatedUser?.fullName &&
+			updatedUser?.dateOfBirth &&
+			updatedUser?.gender &&
+			// updatedUser?.interests?.length > 0 &&
+			updatedUser?.profileImages?.length > 0 &&
+			updatedUser?.discreetMode != null &&
+			updatedUser?.subscriptionType &&
+			updatedUser?.aboutYou &&
+			updatedUser?.sexualOrientation &&
+			updatedUser?.lookingFor &&
+			updatedUser?.wantToSee &&
+			updatedUser?.distance &&
+			updatedUser?.ageRange
+		) {
+			console.log("IM HERE COMPLETE ");
+			isComplete = true;
+		}
+		const today = new Date();
+		today.setHours(0, 0, 0, 0); // Set the time to the beginning of the day
+		const tomorrow = new Date(today);
+		tomorrow.setDate(today.getDate() + 1); // Set the time to the beginning of the next day
+		const userLikes = await Likes.find({
+			likerUserId: userId,
+			createdAt: {
+				$gte: today,
+				$lt: tomorrow,
+			},
+		});
+
+		res.status(200).json({
+			status: true,
+			message: "Spin Successful",
+			data: { ...updatedUser?._doc, isComplete, givenLikes: userLikes },
+		});
+	} catch (error) {
+		res.status(500).json({
+			status: false,
+			message: "An error occurred while liking the user.",
+			data: null,
+		});
+	}
+}
+
+
 module.exports = {
+	zodiacSpin,
 	getUser,
 	login,
 	deleteUser,
@@ -1010,4 +1114,5 @@ module.exports = {
 	filterUserByTime,
 	usersByMonths,
 	activeUsersStats,
+	zodiacSpin
 };

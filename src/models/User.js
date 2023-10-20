@@ -1,3 +1,4 @@
+const { any } = require("joi");
 const mongoose = require("mongoose");
 
 const GiftSchema = new mongoose.Schema({
@@ -123,6 +124,19 @@ let UserSchema = new mongoose.Schema({
     type: Date,
     default: null,
   },
+  remainingSpins: {
+    type: Number,
+    default: 0,
+  },
+  spinsTimeoutDate: {
+    type: Date,
+    default: null,
+  },
+  spinnedUsers: {
+    type: Array,
+    default: []
+  }
+
 });
 
 const User = mongoose.model("User", UserSchema);
