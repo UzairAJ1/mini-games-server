@@ -1030,7 +1030,6 @@ async function zodiacSpin(req, res) {
 			console.log("HERE =====")
 			user.remainingSpins -= 1;
 			user.spinnedUsers = spinnedUsers
-
 		} else if (user.remainingSpins === 1) {
 			// if (!arraysAreEqual(user.spinnedUsers, spinnedUsers)) {
 			// 	return res.status(400).json({
