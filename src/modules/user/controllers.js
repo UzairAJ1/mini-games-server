@@ -175,6 +175,8 @@ async function getUser(req, res) {
 		const userId = req.params.id; // Assuming you're passing the user ID as a parameter
 		const user = await User.findById(userId);
 
+
+
 		if (!user) {
 			res.status(404).json({ message: "User not found" });
 			return;
@@ -211,7 +213,6 @@ async function getUser(req, res) {
 			console.log("IM HERE COMPLETE ");
 			isComplete = true;
 		}
-
 
 		res.status(200).json({
 			data: { ...user?._doc, isComplete, givenLikes: userLikes },
