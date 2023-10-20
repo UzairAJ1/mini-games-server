@@ -10,7 +10,7 @@ const paymentPlanRouter = require("./modules/PaymentPlan/routes");
 const featureRouter = require("./modules/Feature/routes");
 const chatRouter = require("./modules/chat/routes");
 const matchesRouter = require("./modules/matches/routes");
-
+const engagementRouter = require("./modules/userEngagement/routes");
 
 const app = express();
 const path = require("path");
@@ -32,6 +32,8 @@ app.use("/paymentPlans", paymentPlanRouter);
 app.use("/features", featureRouter);
 app.use("/chat", chatRouter);
 app.use("/matches", matchesRouter);
+app.use("/engagement", engagementRouter);
+
 
 
 app.use(function (error, req, res, next) {

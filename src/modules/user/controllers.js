@@ -4,8 +4,15 @@ const fs = require("fs");
 const moment = require("moment");
 const jwt = require("jsonwebtoken");
 const { GlobalSettings } = require("../../models/GlobalSettings");
+const { default: mongoose } = require("mongoose");
 
 // Add user
+const giftOptions = [
+	{ type: "flower", text: "flower" },
+	{ type: "rose", text: "rose" },
+	{ type: "heart", text: "heart" }
+];
+
 async function addUser(req, res) {
 	const uploadedImages = req.files;
 	try {
@@ -148,6 +155,25 @@ async function verifyOTP(req, res) {
 		}
 		if (!user) {
 			const newUser = new User({ mobileNumber });
+			const globalSettings = await GlobalSettings.findOne();
+			const numberOfFreeGifts = globalSettings?.giftInteractionLimit?.freeGifts || 0;
+
+
+			const freeGifts = [];
+			for (let i = 0; i < numberOfFreeGifts; i++) {
+				// Randomly select a gift from the giftOptions array
+				const randomGift = giftOptions[Math.floor(Math.random() * giftOptions.length)];
+
+				// Add the selected gift to the free gifts array
+				freeGifts.push({
+					type: randomGift.type,
+					text: randomGift.text,
+				});
+			}
+			console.log("FREE GIRFT======", freeGifts)
+			// Add the free gifts to the user's myGiftsCollection
+			newUser.myGiftsCollection = freeGifts;
+
 			const savedUser = await newUser.save();
 			res.status(201).json({
 				data: { ...savedUser?._doc, isComplete },
@@ -411,7 +437,8 @@ async function usersByMonths(req, res) {
 
 async function filterUsers(req, res) {
 	try {
-		const { gender, ageRange, distance, interests, location } = req.body;
+
+		const { gender, ageRange, distance, interests, location, userId } = req.body;
 		let filters = {};
 		filters.discreetMode = false;
 
@@ -454,11 +481,26 @@ async function filterUsers(req, res) {
 		// 	};
 		// }
 
+		// const filteredUsers = await User.aggregate([
+		// 	{ $match: filters },
+		// 	{
+		// 		$lookup: { from: 'likes', localField: '_id', foreignField: 'likedUserId', as: 'likes', }
+		// 	}, { $addFields: { likesCount: { $size: '$likes' } } },
+		// ]);
+
 		const filteredUsers = await User.aggregate([
 			{ $match: filters },
 			{
 				$lookup: { from: 'likes', localField: '_id', foreignField: 'likedUserId', as: 'likes', }
-			}, { $addFields: { likesCount: { $size: '$likes' } } },
+			},
+			{ $addFields: { likesCount: { $size: '$likes' } } },
+			{
+				$addFields: {
+					likedByCurrentUser: {
+						$in: [userId ? mongoose.Types.ObjectId(userId) : "", '$likes.likerUserId']
+					}
+				}
+			}
 		]);
 
 
