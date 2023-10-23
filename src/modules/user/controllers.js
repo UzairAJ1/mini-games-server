@@ -145,7 +145,7 @@ async function verifyOTP(req, res) {
 			user?.subscriptionType &&
 			user?.aboutYou &&
 			user?.sexualOrientation &&
-			user?.lookingFor &&
+			user?.lookingFor?.length > 0 &&
 			user?.wantToSee &&
 			user?.distance &&
 			user?.ageRange
@@ -231,7 +231,7 @@ async function getUser(req, res) {
 			user?.subscriptionType &&
 			user?.aboutYou &&
 			user?.sexualOrientation &&
-			user?.lookingFor &&
+			user?.lookingFor?.length > 0 &&
 			user?.wantToSee &&
 			user?.distance &&
 			user?.ageRange
@@ -632,7 +632,10 @@ async function updateUser(req, res) {
 		existingUser.sexualOrientation =
 			userData.sexualOrientation || existingUser.sexualOrientation;
 		existingUser.wantToSee = userData.wantToSee || existingUser.wantToSee;
-		existingUser.lookingFor = userData.lookingFor || existingUser.lookingFor;
+		// existingUser.lookingFor = userData.lookingFor || existingUser.lookingFor;
+		existingUser.lookingFor = userData.lookingFor
+			? JSON.parse(userData.lookingFor)
+			: existingUser.lookingFor;
 		existingUser.distance = userData.distance || existingUser.distance;
 		existingUser.ageRange = userData.ageRange
 			? JSON.parse(userData.ageRange)
@@ -687,7 +690,7 @@ async function updateUser(req, res) {
 			updatedUser?.subscriptionType &&
 			updatedUser?.aboutYou &&
 			updatedUser?.sexualOrientation &&
-			updatedUser?.lookingFor &&
+			updatedUser?.lookingFor?.length > 0 &&
 			updatedUser?.wantToSee &&
 			updatedUser?.distance &&
 			updatedUser?.ageRange
@@ -1104,7 +1107,7 @@ async function zodiacSpin(req, res) {
 			updatedUser?.subscriptionType &&
 			updatedUser?.aboutYou &&
 			updatedUser?.sexualOrientation &&
-			updatedUser?.lookingFor &&
+			updatedUser?.lookingFor?.length > 0 &&
 			updatedUser?.wantToSee &&
 			updatedUser?.distance &&
 			updatedUser?.ageRange

@@ -58,8 +58,8 @@ let UserSchema = new mongoose.Schema({
     duplicate: false,
   },
   lookingFor: {
-    type: String,
-    default: "",
+    type: Array,
+    default: [],
     duplicate: false,
   },
   wantToSee: {
