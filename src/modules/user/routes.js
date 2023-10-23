@@ -19,6 +19,7 @@ const {
   usersByMonths,
   activeUsersStats,
   zodiacSpin,
+  deleteMultipleUsers
 } = require("./controllers");
 const path = require("path");
 const multer = require("multer");
@@ -70,7 +71,7 @@ router.post("/addGift", addGift);
 
 router.get("/usersStats", usersStats);
 
-router.put("/:userId/status", updateUserStatus);
+router.post("/updateUserStatus", updateUserStatus);
 
 router.get("/genderDistribution", genderDistribution);
 
@@ -81,5 +82,7 @@ router.get("/usersByMonths", usersByMonths);
 router.get("/activeUsersStats", activeUsersStats);
 
 router.post("/zodiacSpin", zodiacSpin)
+router.post("/deleteMultipleUsers", deleteMultipleUsers);
+
 
 module.exports = router;

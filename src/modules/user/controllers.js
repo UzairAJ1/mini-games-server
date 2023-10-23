@@ -315,6 +315,36 @@ async function deleteUser(req, res) {
 	}
 }
 
+async function deleteMultipleUsers(req, res) {
+	try {
+		const { userIds } = req.body; // Assuming you pass an array of user IDs in the request body
+		console.log("Ids:", userIds);
+
+		if (!userIds || !Array.isArray(userIds)) {
+			res.status(400).json({
+				message: "Invalid input: User IDs must be provided in an array.",
+			});
+			return;
+		}
+
+		const deletePromises = userIds.map(async (userId) => {
+			const deletedUser = await User.findByIdAndDelete(userId);
+			if (!deletedUser) {
+				// You can collect the IDs of users that were not found if needed
+				return null;
+			}
+			return userId;
+		});
+
+		const deletedUserIds = await Promise.all(deletePromises);
+
+		res
+			.status(200)
+			.json({ message: "Users deleted successfully", deletedUserIds });
+	} catch (error) {
+		res.status(500).json({ error: "Failed to delete users" });
+	}
+}
 // Get All Users
 async function getAllUsers(req, res) {
 	try {
@@ -587,6 +617,37 @@ async function deleteAllUsers(req, res) {
 		res.status(200).json({ message: "All users deleted successfully" });
 	} catch (error) {
 		res.status(500).json({ error: "Failed to delete all user" });
+	}
+}
+async function updateUserStatus(req, res) {
+	try {
+		const { userId, status } = req.body;
+		if (!userId) {
+			return res.status(404).json({
+				data: null,
+				status: false,
+				message: "User not found",
+			});
+		}
+
+		const updatedUser = await User.findByIdAndUpdate(
+			userId,
+			{
+				status,
+			},
+			{
+				new: true,
+			}
+		);
+
+		res.status(200).json({
+			data: updatedUser,
+			status: true,
+			message: "User updated",
+		});
+	} catch (error) {
+		console.error("Error updating user status:", error);
+		res.status(500).json({ error: "Failed to update user status" });
 	}
 }
 
@@ -1163,5 +1224,5 @@ module.exports = {
 	filterUserByTime,
 	usersByMonths,
 	activeUsersStats,
-	zodiacSpin
+	deleteMultipleUsers
 };
