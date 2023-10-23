@@ -120,7 +120,10 @@ async function verifyOTP(req, res) {
   try {
     const { mobileNumber, otp } = req.body;
     const user = await User.findOne({ mobileNumber });
-
+    if (user?.status == "banned") {
+      res.status(404).json({ message: "This User is Banned" });
+      return;
+    }
     console.log("COMPLETE USER ========", user);
     if (otp != "1234") {
       res.status(500).json({ message: "Incorrect OTP", status: 500 });
@@ -164,6 +167,7 @@ async function verifyOTP(req, res) {
     }
     // You can perform authentication checks here
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error: "Failed to verify otp", status: 500 });
   }
 }
@@ -237,10 +241,10 @@ async function login(req, res) {
 
     console.log({ email });
     console.log("user:", user);
-    if (user.status !== "active") {
-      res.status(404).json({ message: "This User is Banned" });
-      return;
-    }
+    // if (user.status !== "active") {
+    //   res.status(404).json({ message: "This User is Banned" });
+    //   return;
+    // }
     if (!user) {
       res.status(404).json({ message: "User not found" });
       return;
@@ -286,6 +290,36 @@ async function deleteUser(req, res) {
   }
 }
 
+async function deleteMultipleUsers(req, res) {
+  try {
+    const { userIds } = req.body; // Assuming you pass an array of user IDs in the request body
+    console.log("Ids:", userIds);
+
+    if (!userIds || !Array.isArray(userIds)) {
+      res.status(400).json({
+        message: "Invalid input: User IDs must be provided in an array.",
+      });
+      return;
+    }
+
+    const deletePromises = userIds.map(async (userId) => {
+      const deletedUser = await User.findByIdAndDelete(userId);
+      if (!deletedUser) {
+        // You can collect the IDs of users that were not found if needed
+        return null;
+      }
+      return userId;
+    });
+
+    const deletedUserIds = await Promise.all(deletePromises);
+
+    res
+      .status(200)
+      .json({ message: "Users deleted successfully", deletedUserIds });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to delete users" });
+  }
+}
 // Get All Users
 async function getAllUsers(req, res) {
   try {
@@ -539,6 +573,37 @@ async function deleteAllUsers(req, res) {
     res.status(500).json({ error: "Failed to delete all user" });
   }
 }
+async function updateUserStatus(req, res) {
+  try {
+    const { userId, status } = req.body;
+    if (!userId) {
+      return res.status(404).json({
+        data: null,
+        status: false,
+        message: "User not found",
+      });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      {
+        status,
+      },
+      {
+        new: true,
+      }
+    );
+
+    res.status(200).json({
+      data: updatedUser,
+      status: true,
+      message: "User updated",
+    });
+  } catch (error) {
+    console.error("Error updating user status:", error);
+    res.status(500).json({ error: "Failed to update user status" });
+  }
+}
 
 async function updateUser(req, res) {
   const uploadedImages = req.files;
@@ -554,7 +619,7 @@ async function updateUser(req, res) {
     console.log("FILES ==========", uploadedImages);
 
     const existingUser = await User.findById(userId);
-
+    console.log("user:", existingUser);
     if (!existingUser) {
       uploadedImages?.forEach((image) => {
         fs.unlink(image.path, (err) => {
@@ -567,6 +632,7 @@ async function updateUser(req, res) {
     }
 
     // Update user properties
+    existingUser.status = userData.status || existingUser.status;
     existingUser.fullName = userData.fullName || existingUser.fullName;
     existingUser.userEngagementMinutes =
       userData.userEngagementMinutes || existingUser.userEngagementMinutes;
@@ -593,6 +659,7 @@ async function updateUser(req, res) {
     existingUser.userType = userData.userType || existingUser.userType;
     existingUser.subscriptionType =
       userData.subscriptionType || existingUser.subscriptionType;
+
     // Update profile images if uploaded
     // if (uploadedImages?.length > 0 && orderIds?.length > 0) {
     // 	existingUser.profileImages = uploadedImages.map((image, index) => ({
@@ -625,7 +692,7 @@ async function updateUser(req, res) {
         existingUser.profileImages.concat(newProfileImages);
     }
     const updatedUser = await existingUser.save();
-    console.log("UPDATED USER ===========", updatedUser);
+
     let isComplete = false;
     if (
       updatedUser?.fullName &&
@@ -821,43 +888,6 @@ const activeUsersStats = async (req, res) => {
   }
 };
 
-const updateUserStatus = async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const { status } = req.body;
-
-    if (!userId || !status) {
-      return res
-        .status(400)
-        .json({ message: "User ID and status are required" });
-    }
-
-    if (!["active", "banned"].includes(status)) {
-      return res.status(400).json({ message: "Invalid status" });
-    }
-
-    const user = await User.findById(userId);
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      { status },
-      { new: true }
-    );
-
-    res.status(200).json({
-      status: true,
-      message: "Status updated successfully",
-      user: updatedUser,
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Internal server error" });
-  }
-};
-
 const genderDistribution = async (req, res) => {
   try {
     // Total Gender Distribution
@@ -1009,4 +1039,5 @@ module.exports = {
   filterUserByTime,
   usersByMonths,
   activeUsersStats,
+  deleteMultipleUsers,
 };
