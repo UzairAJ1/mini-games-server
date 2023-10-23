@@ -619,37 +619,6 @@ async function deleteAllUsers(req, res) {
 		res.status(500).json({ error: "Failed to delete all user" });
 	}
 }
-async function updateUserStatus(req, res) {
-	try {
-		const { userId, status } = req.body;
-		if (!userId) {
-			return res.status(404).json({
-				data: null,
-				status: false,
-				message: "User not found",
-			});
-		}
-
-		const updatedUser = await User.findByIdAndUpdate(
-			userId,
-			{
-				status,
-			},
-			{
-				new: true,
-			}
-		);
-
-		res.status(200).json({
-			data: updatedUser,
-			status: true,
-			message: "User updated",
-		});
-	} catch (error) {
-		console.error("Error updating user status:", error);
-		res.status(500).json({ error: "Failed to update user status" });
-	}
-}
 
 async function updateUser(req, res) {
 	const uploadedImages = req.files;
