@@ -348,7 +348,7 @@ async function deleteMultipleUsers(req, res) {
 // Get All Users
 async function getAllUsers(req, res) {
 	try {
-		const users = await User.find();
+		const users = await User.find({ userType: { $ne: "admin" } });
 		res.status(200).json({
 			data: users,
 			status: true,
@@ -469,9 +469,10 @@ async function filterUsers(req, res) {
 	try {
 
 		const { gender, ageRange, distance, interests, location, userId } = req.body;
-		let filters = {};
-		filters.discreetMode = false;
-
+		let filters = {
+			discreetMode: false,
+			userType: { $ne: "admin" } // Exclude users with userType: "admin"
+		};
 		if (ageRange) {
 			const today = new Date();
 			const startYear = today.getFullYear() - ageRange.end;
@@ -941,6 +942,38 @@ const updateUserStatus = async (req, res) => {
 	}
 };
 
+const updateMultipleUsersStatus = async (req, res) => {
+	try {
+		const { userIds, status } = req.body;
+
+		if (!userIds || !status) {
+			return res.status(400).json({ message: "User IDs and status are required", status: false });
+		}
+
+		if (!["active", "banned"].includes(status)) {
+			return res.status(400).json({ message: "Invalid status", status: false });
+		}
+
+		const updatedUsers = await User.updateMany(
+			{ _id: { $in: userIds } },
+			{ $set: { status: status } }
+		);
+
+		if (updatedUsers.modifiedCount === 0) {
+			return res.status(404).json({ message: "No users found with the provided IDs", status: false });
+		}
+
+		res.status(200).json({
+			status: true,
+			message: "Status updated successfully for the selected users",
+		});
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({ message: "Internal server error" });
+	}
+};
+
+
 const genderDistribution = async (req, res) => {
 	try {
 		// Total Gender Distribution
@@ -1193,5 +1226,6 @@ module.exports = {
 	filterUserByTime,
 	usersByMonths,
 	activeUsersStats,
-	deleteMultipleUsers
+	deleteMultipleUsers,
+	updateMultipleUsersStatus
 };
