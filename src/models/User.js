@@ -92,14 +92,15 @@ let UserSchema = new mongoose.Schema({
     enum: ["user", "admin"],
   },
   location: {
-    lat: {
-      type: Number,
-      default: null,
+    type: {
+      type: String,
+      enum: ['Point'],
+      default: 'Point',
     },
-    long: {
-      type: Number,
-      default: null,
-    },
+    coordinates: {
+      type: [Number],
+      default: [0, 0],
+    }
   },
   myGiftsCollection: [GiftSchema],
   status: {
@@ -134,11 +135,17 @@ let UserSchema = new mongoose.Schema({
   spinnedUsers: {
     type: Array,
     default: []
+  },
+  online: {
+    type: Boolean,
+    default: false
   }
 
 });
+UserSchema.index({ location: '2dsphere' });
 
 const User = mongoose.model("User", UserSchema);
+
 module.exports = {
   User,
 };

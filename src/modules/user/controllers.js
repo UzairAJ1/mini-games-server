@@ -5,6 +5,7 @@ const moment = require("moment");
 const jwt = require("jsonwebtoken");
 const { GlobalSettings } = require("../../models/GlobalSettings");
 const { default: mongoose } = require("mongoose");
+const geolib = require("geolib")
 
 // Add user
 const giftOptions = [
@@ -173,8 +174,11 @@ async function verifyOTP(req, res) {
 			console.log("FREE GIRFT======", freeGifts)
 			// Add the free gifts to the user's myGiftsCollection
 			newUser.myGiftsCollection = freeGifts;
-
+			console.log("BEFORE SAVE")
+			console.log("NEW USER =======", newUser)
 			const savedUser = await newUser.save();
+			console.log("AFTER SAVE")
+
 			res.status(201).json({
 				data: { ...savedUser?._doc, isComplete },
 				status: true,
@@ -191,6 +195,7 @@ async function verifyOTP(req, res) {
 		}
 		// You can perform authentication checks here
 	} catch (error) {
+		console.log("ERROR =======", error)
 		res.status(500).json({ error: "Failed to verify otp", status: 500 });
 	}
 }
@@ -504,20 +509,13 @@ async function filterUsers(req, res) {
 
 		// if (location) {
 		// 	const { lat, long } = location;
-		// 	const maxDistance = 10 * 1000; // 10 km in meters
+		// 	const radiusInKilometers = distance ? distance : 10; // Default radius is 10 kilometers if distance is not provided
 		// 	filters.location = {
 		// 		$geoWithin: {
-		// 			$centerSphere: [[long, lat], maxDistance / 6371] // Earth's radius is approximately 6371 km
+		// 			$centerSphere: [[long, lat], radiusInKilometers / 6371]
 		// 		}
 		// 	};
 		// }
-
-		// const filteredUsers = await User.aggregate([
-		// 	{ $match: filters },
-		// 	{
-		// 		$lookup: { from: 'likes', localField: '_id', foreignField: 'likedUserId', as: 'likes', }
-		// 	}, { $addFields: { likesCount: { $size: '$likes' } } },
-		// ]);
 
 		const filteredUsers = await User.aggregate([
 			{ $match: filters },
@@ -534,12 +532,31 @@ async function filterUsers(req, res) {
 			}
 		]);
 
+		const usersWithDistance = filteredUsers
+			.map(user => {
+				if (user?.location?.coordinates?.length === 2) {
+					const distance = geolib.getDistance(
+						{ latitude: user?.location?.coordinates[1], longitude: user?.location?.coordinates[0] }, // User's latitude and longitude
+						{ latitude: location?.coordinates[1], longitude: location?.coordinates[0] } // Your latitude and longitude from the request
+					);
+					return {
+						...user,
+						distance_in_km: distance / 1000, // Add the distance to the user object
+					};
+				}
+				return null; // Return null for invalid user objects
+			})
+			.filter(user => user !== null) // Filter out null values
+			.sort((a, b) => a.distance_in_km - b.distance_in_km);
+
+
+
 
 		res.status(200).json({
-			data: filteredUsers,
+			data: usersWithDistance,
 			status: true,
 			message: "Filtered User Data",
-			totalFiltered: filteredUsers.length,
+			totalFiltered: usersWithDistance.length,
 			appliedFilters: req.body,
 			status: 200,
 		});
@@ -675,6 +692,7 @@ async function updateUser(req, res) {
 			? JSON.parse(userData.location)
 			: existingUser.location;
 		existingUser.userType = userData.userType || existingUser.userType;
+		existingUser.online = userData.online || existingUser.online;
 		existingUser.subscriptionType =
 			userData.subscriptionType || existingUser.subscriptionType;
 		// Update profile images if uploaded
