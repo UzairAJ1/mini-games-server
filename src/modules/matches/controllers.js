@@ -37,8 +37,10 @@ async function getAllMatches(req, res) {
 
 async function getMatchById(req, res) {
   const { id } = req.params;
+  console.log("ID =====", id)
   try {
-    const match = await Matches.findById(id);
+    const match = await Matches.find({ matchedUsers: { $in: [id] } });
+    console.log("M")
     if (!match) {
       res.status(404).json({
         status: false,
