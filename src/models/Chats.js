@@ -16,6 +16,7 @@ const chatSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  roomId:{type:String,default:""}
 });
 
 const Chats = mongoose.model("Chat", chatSchema);
