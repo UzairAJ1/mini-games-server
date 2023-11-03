@@ -8,8 +8,10 @@ const cors = require("cors");
 
 const indexRouter = require("./modules/index/routes");
 
-const chatRouter = require("./modules/chat/routes");
 
+const userRouter=require("./modules/user/routes");
+const gameRouter=require("./modules/games/routes")
+const scoreRouter=require("./modules/scores/routes");
 // const engagementRouter = require("./modules/engagements/routes");
 
 
@@ -32,8 +34,10 @@ app.use(cors());
 
 app.use("/", indexRouter);
 
-app.use("/chat", chatRouter);
 
+app.use("/user",userRouter);
+app.use("/game",gameRouter);
+app.use("/score",scoreRouter);
 app.use(function (error, req, res, next) {
   if (!res.headersSent && error.statusCode) {
     res.status(error.statusCode).send({
