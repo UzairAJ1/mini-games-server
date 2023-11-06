@@ -1,10 +1,13 @@
 const promiseRouter = require("express-promise-router");
 const router = promiseRouter();
 
-const { createUser,updateUser } = require("./controllers");
+const { createUser,updateUser,loginUser } = require("./controllers");
 
 router.post("/createUser", createUser);
 
-router.post("/updateUser/:user_id",updateUser);
+router.post("/updateUser/:userName",updateUser);
+
+router.post("/loginUser",loginUser);
+
 
 module.exports = router;

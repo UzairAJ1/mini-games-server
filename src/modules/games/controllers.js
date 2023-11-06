@@ -38,7 +38,7 @@ async function createGame(req, res) {
 async function findGame(req, res) {
   try {
     const { game_id } = req.body;
-    
+
     // Find the game by game_id
     const game = await Games.findOne({ game_id });
 
@@ -55,12 +55,20 @@ async function findGame(req, res) {
 
 async function findAllGames(req, res) {
   try {
-  
-    const games = await Games.find();
+    // Find all games in the database and sort them by game_id as numbers in ascending order
+    const games = await Games.find().sort({ game_id: 1 }).lean();
 
     if (!games || games.length === 0) {
       return res.status(404).json({ message: 'No games found in the database' });
     }
+
+    // Convert game_id to numbers for sorting
+    games.forEach((game) => {
+      game.game_id = parseInt(game.game_id);
+    });
+
+    // Sort the games after converting game_id to numbers
+    games.sort((a, b) => a.game_id - b.game_id);
 
     return res.status(200).json(games);
   } catch (error) {
@@ -68,6 +76,8 @@ async function findAllGames(req, res) {
     return res.status(500).json({ message: 'Internal server error' });
   }
 }
+
+
 
 
 module.exports={

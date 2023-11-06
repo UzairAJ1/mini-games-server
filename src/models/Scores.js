@@ -4,7 +4,7 @@ const scoreSchema = new mongoose.Schema({
   id: {
     type: mongoose.Schema.Types.ObjectId,
   },
-  user_id: {
+  userName: {
     type: String,
     ref: "Users",
     required: true
